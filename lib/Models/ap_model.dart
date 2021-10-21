@@ -1,12 +1,14 @@
 import 'dart:convert';
 
 class ApModel {
+  String id;
   String name;
   String city;
   String street;
   String zip;
 
   ApModel({
+    required this.id,
     required this.name,
     required this.city,
     required this.street,
@@ -14,12 +16,14 @@ class ApModel {
   });
 
   ApModel copyWith({
+    String? id,
     String? name,
     String? city,
     String? street,
     String? zip,
   }) {
     return ApModel(
+      id: id ?? this.id,
       name: name ?? this.name,
       city: city ?? this.city,
       street: street ?? this.street,
@@ -29,6 +33,7 @@ class ApModel {
 
   Map<String, dynamic> toMap() {
     return {
+      'id': id,
       'name': name,
       'city': city,
       'street': street,
@@ -38,6 +43,7 @@ class ApModel {
 
   factory ApModel.fromMap(Map<String, dynamic> map) {
     return ApModel(
+      id: map['id'],
       name: map['name'],
       city: map['city'],
       street: map['street'],
@@ -52,7 +58,7 @@ class ApModel {
 
   @override
   String toString() {
-    return 'ApModel(name: $name, city: $city, street: $street, zip: $zip)';
+    return 'ApModel(id: $id, name: $name, city: $city, street: $street, zip: $zip)';
   }
 
   @override
@@ -60,6 +66,7 @@ class ApModel {
     if (identical(this, other)) return true;
 
     return other is ApModel &&
+        other.id == id &&
         other.name == name &&
         other.city == city &&
         other.street == street &&
@@ -68,6 +75,10 @@ class ApModel {
 
   @override
   int get hashCode {
-    return name.hashCode ^ city.hashCode ^ street.hashCode ^ zip.hashCode;
+    return id.hashCode ^
+        name.hashCode ^
+        city.hashCode ^
+        street.hashCode ^
+        zip.hashCode;
   }
 }

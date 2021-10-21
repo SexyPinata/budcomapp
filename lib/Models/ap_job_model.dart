@@ -2,7 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ApJob {
   ApJob(
-      {required this.route,
+      {required this.id,
+      required this.route,
       required this.ap_name,
       required this.ap_address,
       required this.receiver_name,
@@ -14,6 +15,7 @@ class ApJob {
 
   ApJob.fromJson(Map<String, Object?> json)
       : this(
+          id: json['Id']! as String,
           route: json['Route']! as DocumentReference,
           ap_name: json['Ap_Namn']! as String,
           ap_address: json['Ap_Address']! as String,
@@ -25,6 +27,7 @@ class ApJob {
           tracking_number: json['Tracking_Number']! as String,
         );
 
+  final String id;
   final String ap_address;
   final String ap_name;
   final DateTime dateTime;
@@ -37,6 +40,7 @@ class ApJob {
 
   Map<String, Object?> toJson() {
     return {
+      'Id': id,
       'Route': route,
       'Ap_Name': ap_name,
       'Ap_Address': ap_address,
