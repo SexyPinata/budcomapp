@@ -1,11 +1,13 @@
 import 'dart:convert';
 
 class ApAssignment {
+  String id;
   String name;
   String address;
   String awb;
   bool pending;
   ApAssignment({
+    required this.id,
     required this.name,
     required this.address,
     required this.awb,
@@ -13,12 +15,14 @@ class ApAssignment {
   });
 
   ApAssignment copyWith({
+    String? id,
     String? name,
     String? address,
     String? awb,
     bool? pending,
   }) {
     return ApAssignment(
+      id: id ?? this.id,
       name: name ?? this.name,
       address: address ?? this.address,
       awb: awb ?? this.awb,
@@ -28,6 +32,7 @@ class ApAssignment {
 
   Map<String, dynamic> toMap() {
     return {
+      'id': id,
       'name': name,
       'address': address,
       'awb': awb,
@@ -37,6 +42,7 @@ class ApAssignment {
 
   factory ApAssignment.fromMap(Map<String, dynamic> map) {
     return ApAssignment(
+      id: map['id'],
       name: map['name'],
       address: map['address'],
       awb: map['awb'],
@@ -51,7 +57,7 @@ class ApAssignment {
 
   @override
   String toString() {
-    return 'ApAssignment(name: $name, address: $address, awb: $awb, pending: $pending)';
+    return 'ApAssignment(id: $id, name: $name, address: $address, awb: $awb, pending: $pending)';
   }
 
   @override
@@ -59,6 +65,7 @@ class ApAssignment {
     if (identical(this, other)) return true;
 
     return other is ApAssignment &&
+        other.id == id &&
         other.name == name &&
         other.address == address &&
         other.awb == awb &&
@@ -67,6 +74,10 @@ class ApAssignment {
 
   @override
   int get hashCode {
-    return name.hashCode ^ address.hashCode ^ awb.hashCode ^ pending.hashCode;
+    return id.hashCode ^
+        name.hashCode ^
+        address.hashCode ^
+        awb.hashCode ^
+        pending.hashCode;
   }
 }
