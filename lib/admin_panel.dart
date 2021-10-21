@@ -2,26 +2,71 @@
 
 import 'dart:ffi';
 
+import 'package:budcomapp/Forms/route_add_form.dart';
+import 'package:budcomapp/Forms/route_update_form.dart';
 import 'package:budcomapp/GetUserRoute.dart';
+import 'package:budcomapp/Models/route_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'Forms/driver_add_form.dart';
 import 'Models/driver_model.dart';
 import 'Forms/driver_update_form.dart';
 
-class admin_panel extends StatelessWidget {
-  const admin_panel({Key? key}) : super(key: key);
-  Future<void> _pushPage(BuildContext context, Widget page) async {
-    Navigator.of(context) /*!*/ .push(
-      MaterialPageRoute<void>(builder: (_) => page),
-    );
-  }
+class AdminPanel extends StatefulWidget {
+  AdminPanel({Key? key}) : super(key: key);
 
   @override
+  _AdminPanelState createState() => _AdminPanelState();
+}
+
+class _AdminPanelState extends State<AdminPanel> {
+  @override
   Widget build(BuildContext context) {
+    int index = 1;
+    bool _visable = false;
+    void _showMaterialDialog(Widget? content) {
+      showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              content: content,
+            );
+          });
+    }
+
     final _kTabPages = <Widget>[
-      Center(child: UserInformation()),
-      Center(child: RouteInfo()),
+      Center(
+          child: Scaffold(
+        body: UserInformation(),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () {
+            _showMaterialDialog(const Driver_add_form());
+          },
+
+          //onPressed: () async {
+          //  await _pushPage(context, const Driver_add_form());
+          //},
+          label: const Text('New Driver'),
+          icon: const Icon(Icons.add),
+          backgroundColor: Colors.redAccent,
+        ),
+      )),
+      Center(
+          child: Scaffold(
+        body: RouteInfo(),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () {
+            _showMaterialDialog(const RouteAddForm());
+          },
+
+          //onPressed: () async {
+          //  await _pushPage(context, const Driver_add_form());
+          //},
+          label: const Text('New Route'),
+          icon: const Icon(Icons.add),
+          backgroundColor: Colors.redAccent,
+        ),
+      )),
       const Center(child: Icon(Icons.forum, size: 64.0, color: Colors.blue)),
     ];
     final _kTabs = <Tab>[
@@ -29,22 +74,12 @@ class admin_panel extends StatelessWidget {
       const Tab(icon: Icon(Icons.alt_route), text: 'Tab2'),
       const Tab(icon: Icon(Icons.forum), text: 'Tab3'),
     ];
-    void _showMaterialDialog(Widget? content) {
-      showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: Text('Material Dialog'),
-              content: content,
-            );
-          });
-    }
 
     return DefaultTabController(
       length: _kTabs.length,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('appbar title'),
+          title: const Text('Admin Panel'),
 
           // If `TabController controller` is not provided, then a
           // DefaultTabController ancestor must be provided instead.
@@ -52,21 +87,34 @@ class admin_panel extends StatelessWidget {
           // bar" example.
           bottom: TabBar(
             tabs: _kTabs,
+            onTap: (value) {
+              setState(() {
+                index = value;
+                if (value != 0) _visable = false;
+                if (value == 0) _visable = true;
+                print(_visable);
+                print(value);
+              });
+            },
           ),
         ),
         body: TabBarView(
           children: _kTabPages,
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () {
-            _showMaterialDialog(const Driver_add_form());
-          },
-          //onPressed: () async {
-          //  await _pushPage(context, const Driver_add_form());
-          //},
-          label: const Text('Add'),
-          icon: const Icon(Icons.add),
-          backgroundColor: Colors.redAccent,
+        floatingActionButton: Visibility(
+          visible: _visable == true,
+          child: FloatingActionButton.extended(
+            onPressed: () {
+              _showMaterialDialog(const Driver_add_form());
+            },
+
+            //onPressed: () async {
+            //  await _pushPage(context, const Driver_add_form());
+            //},
+            label: const Text('Add'),
+            icon: const Icon(Icons.add),
+            backgroundColor: Colors.redAccent,
+          ),
         ),
       ),
     );
@@ -82,20 +130,21 @@ class _UserInformationState extends State<UserInformation>
     with AutomaticKeepAliveClientMixin {
   final Stream<QuerySnapshot> _jobStream =
       FirebaseFirestore.instance.collection('drivers').snapshots();
-  void _showMaterialDialog(Widget? content) {
-    showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text('Material Dialog'),
-            content: content,
-          );
-        });
-  }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    void _showMaterialDialog(Widget? content) {
+      showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text('Material Dialog'),
+              content: content,
+            );
+          });
+    }
+
     return Center(
       child: StreamBuilder<QuerySnapshot>(
         stream: _jobStream,
@@ -154,12 +203,23 @@ class _RouteInfo extends State<RouteInfo> with AutomaticKeepAliveClientMixin {
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    void _showMaterialDialog(Widget? content) {
+      showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text('Material Dialog'),
+              content: content,
+            );
+          });
+    }
+
     return Center(
       child: StreamBuilder<QuerySnapshot>(
         stream: _jobStream,
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
-            return Text('Something went wrong');
+            return const Text('Something went wrong');
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -171,14 +231,21 @@ class _RouteInfo extends State<RouteInfo> with AutomaticKeepAliveClientMixin {
               Map<String, dynamic> data =
                   document.data()! as Map<String, dynamic>;
               List dara2 = data['List_Of_Aps'];
-              print(dara2.first);
               return Card(
                 child: ExpansionTile(
                     title: Text(data['Name']),
-                    subtitle: Text('Trailing expansion arrow icon'),
+                    subtitle: Text(
+                        'Number of APs assigned: ${data['List_Of_Aps'].length}'),
                     trailing: ElevatedButton(
-                      child: Text("Initialised Love"),
-                      onPressed: () {},
+                      style: ButtonStyle(
+                          backgroundColor: MaterialStateProperty.all<Color>(
+                              Colors.redAccent)),
+                      child: const Text("Edit"),
+                      onPressed: () {
+                        _showMaterialDialog(RouteUpdateForm(
+                            model: Route_Model.fromJson(data),
+                            docId: document.id));
+                      },
                     ),
                     children: <Widget>[
                       ListView.builder(

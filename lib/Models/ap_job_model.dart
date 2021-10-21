@@ -14,7 +14,7 @@ class ApJob {
 
   ApJob.fromJson(Map<String, Object?> json)
       : this(
-          route: json['route']! as DocumentReference,
+          route: json['Route']! as DocumentReference,
           ap_name: json['Ap_Namn']! as String,
           ap_address: json['Ap_Address']! as String,
           receiver_name: json['Receiver_Name']! as String,

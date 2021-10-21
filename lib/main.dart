@@ -1,11 +1,14 @@
 import 'dart:async';
+import 'package:budcomapp/GetCurrentUser.dart';
 import 'package:budcomapp/admin_panel.dart';
+import 'package:budcomapp/get_job_list.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import './register_page.dart';
 import './signin_page.dart';
+import 'GetUserRoute.dart';
 import 'Models/ap_job_model.dart';
 import 'package:flutter_signin_button/button_builder.dart';
 
@@ -50,79 +53,43 @@ class UserInformation extends StatefulWidget {
   _UserInformationState createState() => _UserInformationState();
 }
 
+User? _user = auth.currentUser;
+
 class _UserInformationState extends State<UserInformation> {
-  final Stream<QuerySnapshot> _jobStream =
-      FirebaseFirestore.instance.collection('Jobs').snapshots();
   final moviesRef =
       FirebaseFirestore.instance.collection('Jobs').withConverter<ApJob>(
             fromFirestore: (snapshot, _) => ApJob.fromJson(snapshot.data()!),
             toFirestore: (apjob, _) => apjob.toJson(),
           );
+
+  final Stream<QuerySnapshot> _jobStream =
+      FirebaseFirestore.instance.collection("Jobs").snapshots();
+
+  @override
+  void initState() {
+    auth.userChanges().listen(
+          (event) => setState(() => _user = event),
+        );
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: StreamBuilder<QuerySnapshot>(
-        stream: _jobStream,
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return Text('Something went wrong');
-          }
-
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return CircularProgressIndicator();
-          }
-
-          return ListView(
-            children: snapshot.data!.docs.map((DocumentSnapshot document) {
-              Map<String, dynamic> data =
-                  document.data()! as Map<String, dynamic>;
-              Map<String, dynamic> data2 =
-                  document.data()! as Map<String, dynamic>;
-              return Card(
-                child: ListTile(
-                  title: Text(data['Receiver_Name']),
-                  subtitle: Text(data['Original_Address'] +
-                      ' \n' +
-                      data['Tracking_Number']),
-                ),
-              );
-            }).toList(),
-          );
-        },
-      ),
-    );
+    return Center(child: GetJobList(driverEmail: _user!.email));
   }
 }
 
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key? key, required this.title}) : super(key: key);
+
   final String title;
+
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
   User? user = auth.currentUser;
-  @override
-  void initState() {
-    auth.userChanges().listen(
-          (event) => setState(() => user = event),
-        );
-    super.initState();
-  }
-
-  int _selectedIndex = 0; //New
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
-  Future<void> _pushPage(BuildContext context, Widget page) async {
-    Navigator.of(context) /*!*/ .push(
-      MaterialPageRoute<void>(builder: (_) => page),
-    );
-  }
 
   static List<Widget> _pages = <Widget>[
     Center(
@@ -141,6 +108,28 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     ),
   ];
+
+  int _selectedIndex = 0; //New
+
+  @override
+  void initState() {
+    auth.userChanges().listen(
+          (event) => setState(() => user = event),
+        );
+    super.initState();
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  Future<void> _pushPage(BuildContext context, Widget page) async {
+    Navigator.of(context) /*!*/ .push(
+      MaterialPageRoute<void>(builder: (_) => page),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -185,7 +174,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           leading: const Icon(Icons.comment),
           onTap: () async {
-            await _pushPage(context, const admin_panel());
+            await _pushPage(context, AdminPanel());
           },
         ),
       ],
@@ -205,7 +194,7 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Icon(Icons.add),
           onPressed: () async {
             final moviesRef = FirebaseFirestore.instance
-                .collection('Jobs')
+                .collection('Routes/ZNQ0FUi9oQo9fPHshI8i/Jobs')
                 .withConverter<ApJob>(
                   fromFirestore: (snapshot, _) =>
                       ApJob.fromJson(snapshot.data()!),

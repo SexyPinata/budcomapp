@@ -10,22 +10,24 @@ import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 
 List<Object?>? _selectedDrivers;
 List<Object?>? _selectedAps;
+String? _name;
+String? _email;
+String? _password;
+String? _url;
+String? _phoneNumber;
+String? _calories;
 
-class RouteAddForm extends StatefulWidget {
-  const RouteAddForm({Key? key}) : super(key: key);
+class RouteUpdateForm extends StatefulWidget {
+  Route_Model model;
+  String docId;
+  RouteUpdateForm({Key? key, required this.model, required this.docId})
+      : super(key: key);
 
   @override
-  State<StatefulWidget> createState() => RouteAddFormState();
+  State<StatefulWidget> createState() => RouteUpdateFormState();
 }
 
-class RouteAddFormState extends State<RouteAddForm> {
-  String? _name;
-  String? _email;
-  String? _password;
-  String? _url;
-  String? _phoneNumber;
-  String? _calories;
-
+class RouteUpdateFormState extends State<RouteUpdateForm> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   Widget _buildName() {
@@ -98,62 +100,13 @@ class RouteAddFormState extends State<RouteAddForm> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            _buildName(),
-            ApDropDown(),
-            RaisedButton(
-              child: Text(
-                'Submit',
-                style: TextStyle(color: Colors.blue, fontSize: 16),
-              ),
-              onPressed: () async {
-                if (!_formKey.currentState!.validate()) {
-                  return;
-                }
-
-                _formKey.currentState!.save();
-                final docAddRef = FirebaseFirestore.instance
-                    .collection('Routes')
-                    .withConverter<Route_Model>(
-                      fromFirestore: (snapshot, _) =>
-                          Route_Model.fromJson(snapshot.data()!),
-                      toFirestore: (newDriver, _) => newDriver.toJson(),
-                    );
-                await docAddRef
-                    .add(Route_Model(list_of_aps: _selectedAps!, name: _name!));
-                Navigator.pop(context);
-                //Send to API
-              },
-            )
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class ApDropDown extends StatefulWidget {
-  const ApDropDown({Key? key}) : super(key: key);
-
-  @override
-  _ApDropDown createState() => _ApDropDown();
-}
-
-class _ApDropDown extends State<ApDropDown> {
-  final Stream<QuerySnapshot> _usersStream =
+  final Stream<QuerySnapshot> _apStream =
       FirebaseFirestore.instance.collection('AccessPoints').snapshots();
 
   @override
-  Widget build(BuildContext context) {
+  Widget _buildApDropDown() {
     return StreamBuilder<QuerySnapshot>(
-      stream: _usersStream,
+      stream: _apStream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Text('Something went wrong');
@@ -164,6 +117,7 @@ class _ApDropDown extends State<ApDropDown> {
         }
 
         return MultiSelectDialogField(
+          initialValue: widget.model.list_of_aps as List,
           buttonText: Text('APs'),
           buttonIcon: const Icon(Icons.arrow_downward),
           unselectedColor: Colors.white,
@@ -179,12 +133,53 @@ class _ApDropDown extends State<ApDropDown> {
               value['Name'],
             );
           }).toList(),
-          onConfirm: (labels) {
-            _selectedAps = labels;
-            print(labels);
+          onConfirm: (values) {
+            _selectedAps = values;
           },
         );
       },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            _buildName(),
+            _buildApDropDown(),
+            RaisedButton(
+              child: Text(
+                'Submit',
+                style: TextStyle(color: Colors.blue, fontSize: 16),
+              ),
+              onPressed: () async {
+                if (!_formKey.currentState!.validate()) {
+                  return;
+                }
+
+                _formKey.currentState!.save();
+                final docAddRef = FirebaseFirestore.instance
+                    .collection('Routes')
+                    .doc(widget.docId)
+                    .withConverter<Route_Model>(
+                      fromFirestore: (snapshot, _) =>
+                          Route_Model.fromJson(snapshot.data()!),
+                      toFirestore: (newDriver, _) => newDriver.toJson(),
+                    );
+                await docAddRef.update(
+                    Route_Model(list_of_aps: _selectedAps!, name: _name!)
+                        .toJson());
+                Navigator.pop(context);
+                //Send to API
+              },
+            )
+          ],
+        ),
+      ),
     );
   }
 }
