@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 class Aprawdatamodel {
+  final String id;
   final String Tracking_Number;
   final String Receiver_Name;
   final String Street;
@@ -12,6 +13,7 @@ class Aprawdatamodel {
   final int Access_Point_Areacode;
   final String Access_Point_City;
   Aprawdatamodel({
+    required this.id,
     required this.Tracking_Number,
     required this.Receiver_Name,
     required this.Street,
@@ -25,6 +27,7 @@ class Aprawdatamodel {
   });
 
   Aprawdatamodel copyWith({
+    String? id,
     String? Tracking_Number,
     String? Receiver_Name,
     String? Street,
@@ -37,6 +40,7 @@ class Aprawdatamodel {
     String? Access_Point_City,
   }) {
     return Aprawdatamodel(
+      id: id ?? this.id,
       Tracking_Number: Tracking_Number ?? this.Tracking_Number,
       Receiver_Name: Receiver_Name ?? this.Receiver_Name,
       Street: Street ?? this.Street,
@@ -53,6 +57,7 @@ class Aprawdatamodel {
 
   Map<String, dynamic> toMap() {
     return {
+      'id': id,
       'Tracking_Number': Tracking_Number,
       'Receiver_Name': Receiver_Name,
       'Street': Street,
@@ -68,15 +73,16 @@ class Aprawdatamodel {
 
   factory Aprawdatamodel.fromMap(Map<String, dynamic> map) {
     return Aprawdatamodel(
+      id: map['id'],
       Tracking_Number: map['Tracking_Number'],
       Receiver_Name: map['Receiver_Name'],
       Street: map['Street'],
-      Areacode: map['Areacode']?.toInt(),
+      Areacode: map['Areacode'],
       City: map['City'],
       Receiver_Phone: map['Receiver_Phone'],
       Access_Point_Name: map['Access_Point_Name'],
       Access_Point_Street: map['Access_Point_Street'],
-      Access_Point_Areacode: map['Access_Point_Areacode']?.toInt(),
+      Access_Point_Areacode: map['Access_Point_Areacode'],
       Access_Point_City: map['Access_Point_City'],
     );
   }
@@ -88,7 +94,7 @@ class Aprawdatamodel {
 
   @override
   String toString() {
-    return 'Aprawdatamodel(Tracking_Number: $Tracking_Number, Receiver_Name: $Receiver_Name, Street: $Street, Areacode: $Areacode, City: $City, Receiver_Phone: $Receiver_Phone, Access_Point_Name: $Access_Point_Name, Access_Point_Street: $Access_Point_Street, Access_Point_Areacode: $Access_Point_Areacode, Access_Point_City: $Access_Point_City)';
+    return 'Aprawdatamodel(id: $id, Tracking_Number: $Tracking_Number, Receiver_Name: $Receiver_Name, Street: $Street, Areacode: $Areacode, City: $City, Receiver_Phone: $Receiver_Phone, Access_Point_Name: $Access_Point_Name, Access_Point_Street: $Access_Point_Street, Access_Point_Areacode: $Access_Point_Areacode, Access_Point_City: $Access_Point_City)';
   }
 
   @override
@@ -96,6 +102,7 @@ class Aprawdatamodel {
     if (identical(this, other)) return true;
 
     return other is Aprawdatamodel &&
+        other.id == id &&
         other.Tracking_Number == Tracking_Number &&
         other.Receiver_Name == Receiver_Name &&
         other.Street == Street &&
@@ -110,7 +117,8 @@ class Aprawdatamodel {
 
   @override
   int get hashCode {
-    return Tracking_Number.hashCode ^
+    return id.hashCode ^
+        Tracking_Number.hashCode ^
         Receiver_Name.hashCode ^
         Street.hashCode ^
         Areacode.hashCode ^
