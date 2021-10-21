@@ -192,23 +192,6 @@ class _Driver_Widget_formState extends State<Driver_update_form> {
                       widget.model.route = FirebaseFirestore.instance
                           .collection('Routes')
                           .doc(refString);
-                      final docAddRef = FirebaseFirestore.instance
-                          .collection('drivers')
-                          .doc(widget.docId)
-                          .withConverter<Driver_Model>(
-                            fromFirestore: (snapshot, _) =>
-                                Driver_Model.fromJson(snapshot.data()!),
-                            toFirestore: (newDriver, _) => newDriver.toJson(),
-                          );
-
-                      await docAddRef.update(Driver_Model(
-                              name: widget.model.name,
-                              email: widget.model.email,
-                              number: widget.model.number,
-                              photo: widget.model.photo,
-                              role: 'User',
-                              route: widget.model.route)
-                          .toJson());
                     }
                   },
                   child: const Text('Submit'),

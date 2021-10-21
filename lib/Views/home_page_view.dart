@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:budcomapp/GetCurrentUser.dart';
 import 'package:budcomapp/Models/ap_job_model.dart';
+import 'package:budcomapp/Providers/driver_provider.dart';
 import 'package:budcomapp/admin_panel.dart';
 import 'package:budcomapp/get_job_list.dart';
 import 'package:budcomapp/signin_page.dart';
@@ -9,11 +10,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_signin_button/button_builder.dart';
+import 'package:provider/src/provider.dart';
 
 import '../main.dart';
 import '../register_page.dart';
 
 class UserInformation extends StatefulWidget {
+  const UserInformation({Key? key}) : super(key: key);
+
   @override
   _UserInformationState createState() => _UserInformationState();
 }
@@ -26,9 +30,6 @@ class _UserInformationState extends State<UserInformation> {
             fromFirestore: (snapshot, _) => ApJob.fromJson(snapshot.data()!),
             toFirestore: (apjob, _) => apjob.toJson(),
           );
-
-  final Stream<QuerySnapshot> _jobStream =
-      FirebaseFirestore.instance.collection("Jobs").snapshots();
 
   @override
   void initState() {
@@ -45,7 +46,7 @@ class _UserInformationState extends State<UserInformation> {
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key? key, required this.title}) : super(key: key);
+  const MyHomePage({Key? key, required this.title}) : super(key: key);
 
   final String title;
 
@@ -56,17 +57,17 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   User? user = auth.currentUser;
 
-  static List<Widget> _pages = <Widget>[
-    Center(
+  static final List<Widget> _pages = <Widget>[
+    const Center(
       child: UserInformation(),
     ),
-    Center(
+    const Center(
       child: Icon(
         Icons.map,
         size: 150,
       ),
     ),
-    Center(
+    const Center(
       child: Icon(
         Icons.assignment_turned_in,
         size: 150,
@@ -108,7 +109,7 @@ class _MyHomePageState extends State<MyHomePage> {
     var drawerHeader = UserAccountsDrawerHeader(
       accountName: Text(user == null ? 'Not signed in' : '${user.displayName}'),
       accountEmail: Text(user == null ? '' : '${user.email}'),
-      currentAccountPicture: CircleAvatar(
+      currentAccountPicture: const CircleAvatar(
         child: FlutterLogo(size: 42.0),
       ),
     );
@@ -116,7 +117,7 @@ class _MyHomePageState extends State<MyHomePage> {
       children: <Widget>[
         drawerHeader,
         ListTile(
-          title: Text(
+          title: const Text(
             'Sign in',
           ),
           leading: const Icon(Icons.favorite),
@@ -125,7 +126,7 @@ class _MyHomePageState extends State<MyHomePage> {
           },
         ),
         ListTile(
-          title: Text(
+          title: const Text(
             'Registrer',
           ),
           leading: const Icon(Icons.comment),
@@ -134,7 +135,7 @@ class _MyHomePageState extends State<MyHomePage> {
           },
         ),
         ListTile(
-          title: Text(
+          title: const Text(
             'Admin Panel',
           ),
           leading: const Icon(Icons.comment),
@@ -156,34 +157,8 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       floatingActionButton: FloatingActionButton(
           backgroundColor: Colors.green,
-          child: Icon(Icons.add),
-          onPressed: () async {
-            final moviesRef = FirebaseFirestore.instance
-                .collection('Routes/ZNQ0FUi9oQo9fPHshI8i/Jobs')
-                .withConverter<ApJob>(
-                  fromFirestore: (snapshot, _) =>
-                      ApJob.fromJson(snapshot.data()!),
-                  toFirestore: (apjob, _) => apjob.toJson(),
-                );
-            DocumentReference routeRef = FirebaseFirestore.instance
-                .collection('Routes')
-                .doc('ZlumZXvBJqZEDzgfnyPl');
-            DocumentReference driverRef = FirebaseFirestore.instance
-                .collection('Routes')
-                .doc('3hIpTqRiL7Y85pMzhp6S');
-            await moviesRef.add(
-              ApJob(
-                  route: routeRef,
-                  ap_name: 'ap_name',
-                  ap_address: 'ap_address',
-                  receiver_name: 'receiver_name',
-                  original_address: 'original_address',
-                  dateTime: DateTime.now(),
-                  driver: driverRef,
-                  status: 'status',
-                  tracking_number: 'tracking_number'),
-            );
-          }),
+          child: const Icon(Icons.add),
+          onPressed: () async {}),
       bottomNavigationBar: BottomNavigationBar(
         selectedFontSize: 20,
         selectedIconTheme: IconThemeData(color: Colors.red[800], size: 40),

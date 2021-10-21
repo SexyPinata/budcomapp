@@ -8,9 +8,11 @@ import 'package:budcomapp/GetUserRoute.dart';
 import 'package:budcomapp/Models/route_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/src/provider.dart';
 import 'Forms/driver_add_form.dart';
 import 'Models/driver_model.dart';
 import 'Forms/driver_update_form.dart';
+import 'Providers/driver_provider.dart';
 
 class AdminPanel extends StatefulWidget {
   AdminPanel({Key? key}) : super(key: key);
@@ -20,6 +22,50 @@ class AdminPanel extends StatefulWidget {
 }
 
 class _AdminPanelState extends State<AdminPanel> {
+  late DriverProvider entryProvider;
+  @override
+  void initState() {
+    super.initState();
+    entryProvider = Provider.of<DriverProvider>(context);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    entryProvider = Provider.of<DriverProvider>(context);
+  }
+
+  Widget _UserInformation(BuildContext context) {
+    void _showMaterialDialog(Widget? content) {
+      showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text('Material Dialog'),
+              content: content,
+            );
+          });
+    }
+
+    return Center(
+      child: StreamBuilder<List<Driver_Model>>(
+        stream: entryProvider.entries,
+        builder: (context, snapshot) {
+          return ListView.builder(
+              itemCount: snapshot.data!.length,
+              itemBuilder: (context, index) {
+                return Card(
+                    child: ListTile(
+                  leading: Image.network(snapshot.data![index].photo),
+                  title: Text(snapshot.data![index].name),
+                  subtitle: Text(snapshot.data![index].email),
+                ));
+              });
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     int index = 1;
@@ -37,7 +83,7 @@ class _AdminPanelState extends State<AdminPanel> {
     final _kTabPages = <Widget>[
       Center(
           child: Scaffold(
-        body: UserInformation(),
+        body: _UserInformation(context),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () {
             _showMaterialDialog(const Driver_add_form());
@@ -119,75 +165,6 @@ class _AdminPanelState extends State<AdminPanel> {
       ),
     );
   }
-}
-
-class UserInformation extends StatefulWidget {
-  @override
-  _UserInformationState createState() => _UserInformationState();
-}
-
-class _UserInformationState extends State<UserInformation>
-    with AutomaticKeepAliveClientMixin {
-  final Stream<QuerySnapshot> _jobStream =
-      FirebaseFirestore.instance.collection('drivers').snapshots();
-
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    void _showMaterialDialog(Widget? content) {
-      showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: Text('Material Dialog'),
-              content: content,
-            );
-          });
-    }
-
-    return Center(
-      child: StreamBuilder<QuerySnapshot>(
-        stream: _jobStream,
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return Text('Something went wrong');
-          }
-
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return CircularProgressIndicator();
-          }
-
-          return ListView(
-            children: snapshot.data!.docs.map((DocumentSnapshot document) {
-              Map<String, dynamic> data =
-                  document.data()! as Map<String, dynamic>;
-              return Card(
-                  child: ListTile(
-                leading: Image.network(data['Photo']),
-                title: Text(data['Driver_Name']),
-                subtitle: GetUserRoute(data['Route']),
-                onLongPress: () {
-                  _showMaterialDialog(Driver_update_form(
-                    model: Driver_Model.fromJson(data),
-                    docId: document.id,
-                  ));
-                },
-              ));
-            }).toList(),
-          );
-        },
-      ),
-    );
-  }
-
-  Future<void> _pushPage(BuildContext context, Widget page) async {
-    Navigator.of(context) /*!*/ .push(
-      MaterialPageRoute<void>(builder: (_) => page),
-    );
-  }
-
-  @override
-  bool get wantKeepAlive => true;
 }
 
 class RouteInfo extends StatefulWidget {

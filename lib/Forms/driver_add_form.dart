@@ -31,6 +31,7 @@ enum ImageSourceType { gallery, camera }
 class _Driver_add_formState extends State<Driver_add_form> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   Driver_Model model = Driver_Model(
+      id: '',
       name: 'name',
       email: 'email',
       number: 'number',
@@ -210,10 +211,11 @@ class _Driver_add_formState extends State<Driver_add_form> {
                           .collection('drivers')
                           .withConverter<Driver_Model>(
                             fromFirestore: (snapshot, _) =>
-                                Driver_Model.fromJson(snapshot.data()!),
-                            toFirestore: (newDriver, _) => newDriver.toJson(),
+                                Driver_Model.fromMap(snapshot.data()!),
+                            toFirestore: (newDriver, _) => newDriver.toMap(),
                           );
                       await docAddRef.add(Driver_Model(
+                          id: '',
                           name: name2!,
                           email: email2!,
                           number: number2!,

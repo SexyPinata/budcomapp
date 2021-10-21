@@ -33,21 +33,21 @@ class ApModel {
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
-      'name': name,
-      'city': city,
-      'street': street,
-      'zip': zip,
+      'Id': id,
+      'Name': name,
+      'City': city,
+      'Street': street,
+      'Zip': zip,
     };
   }
 
   factory ApModel.fromMap(Map<String, dynamic> map) {
     return ApModel(
-      id: map['id'],
-      name: map['name'],
-      city: map['city'],
-      street: map['street'],
-      zip: map['zip'],
+      id: map['Id'],
+      name: map['Name'],
+      city: map['City'],
+      street: map['Street'],
+      zip: map['Zip'],
     );
   }
 
@@ -58,7 +58,7 @@ class ApModel {
 
   @override
   String toString() {
-    return 'ApModel(id: $id, name: $name, city: $city, street: $street, zip: $zip)';
+    return 'ApModel(Id: $id, Name: $name, City: $city, Street: $street, Zip: $zip)';
   }
 
   @override
