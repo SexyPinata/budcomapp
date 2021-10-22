@@ -170,9 +170,8 @@ class RouteUpdateFormState extends State<RouteUpdateForm> {
                           Route_Model.fromJson(snapshot.data()!),
                       toFirestore: (newDriver, _) => newDriver.toJson(),
                     );
-                await docAddRef.update(
-                    Route_Model(list_of_aps: _selectedAps!, name: _name!)
-                        .toJson());
+                // Update function here
+
                 Navigator.pop(context);
                 //Send to API
               },
