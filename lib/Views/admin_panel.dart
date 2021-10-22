@@ -4,15 +4,14 @@ import 'dart:ffi';
 
 import 'package:budcomapp/Forms/route_add_form.dart';
 import 'package:budcomapp/Forms/route_update_form.dart';
-import 'package:budcomapp/GetUserRoute.dart';
+import 'package:budcomapp/Models/driver_model.dart';
 import 'package:budcomapp/Models/route_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/src/provider.dart';
-import 'Forms/driver_add_form.dart';
-import 'Models/driver_model.dart';
-import 'Forms/driver_update_form.dart';
-import 'Providers/driver_provider.dart';
+import 'package:provider/provider.dart';
+
+import '../Providers/driver_provider.dart';
+import 'driver_entry.dart';
 
 class AdminPanel extends StatefulWidget {
   AdminPanel({Key? key}) : super(key: key);
@@ -21,12 +20,15 @@ class AdminPanel extends StatefulWidget {
   _AdminPanelState createState() => _AdminPanelState();
 }
 
-class _AdminPanelState extends State<AdminPanel> {
+class _AdminPanelState extends State<AdminPanel>
+    with AutomaticKeepAliveClientMixin {
   late DriverProvider entryProvider;
+  @override
+  bool get wantKeepAlive => true;
   @override
   void initState() {
     super.initState();
-    entryProvider = Provider.of<DriverProvider>(context);
+    //entryProvider = Provider.of<DriverProvider>(context);
   }
 
   @override
@@ -51,16 +53,27 @@ class _AdminPanelState extends State<AdminPanel> {
       child: StreamBuilder<List<Driver_Model>>(
         stream: entryProvider.entries,
         builder: (context, snapshot) {
-          return ListView.builder(
-              itemCount: snapshot.data!.length,
-              itemBuilder: (context, index) {
-                return Card(
-                    child: ListTile(
-                  leading: Image.network(snapshot.data![index].photo),
-                  title: Text(snapshot.data![index].name),
-                  subtitle: Text(snapshot.data![index].email),
-                ));
-              });
+          if (snapshot.hasError) {
+            return const Text('Something went wrong');
+          }
+
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return CircularProgressIndicator();
+          }
+
+          return ListView(
+              children: snapshot.data!.map((driver) {
+            return Card(
+                child: ListTile(
+              leading: Image.network(driver.photo),
+              title: Text(driver.name),
+              subtitle: Text(driver.email),
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute<void>(
+                    builder: (_) => DriverEntryScreen(entry: driver)));
+              },
+            ));
+          }).toList());
         },
       ),
     );
@@ -86,7 +99,8 @@ class _AdminPanelState extends State<AdminPanel> {
         body: _UserInformation(context),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () {
-            _showMaterialDialog(const Driver_add_form());
+            Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => DriverEntryScreen()));
           },
 
           //onPressed: () async {
@@ -102,7 +116,8 @@ class _AdminPanelState extends State<AdminPanel> {
         body: RouteInfo(),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () {
-            _showMaterialDialog(const RouteAddForm());
+            Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => DriverEntryScreen()));
           },
 
           //onPressed: () async {
@@ -146,21 +161,6 @@ class _AdminPanelState extends State<AdminPanel> {
         ),
         body: TabBarView(
           children: _kTabPages,
-        ),
-        floatingActionButton: Visibility(
-          visible: _visable == true,
-          child: FloatingActionButton.extended(
-            onPressed: () {
-              _showMaterialDialog(const Driver_add_form());
-            },
-
-            //onPressed: () async {
-            //  await _pushPage(context, const Driver_add_form());
-            //},
-            label: const Text('Add'),
-            icon: const Icon(Icons.add),
-            backgroundColor: Colors.redAccent,
-          ),
         ),
       ),
     );

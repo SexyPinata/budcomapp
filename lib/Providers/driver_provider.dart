@@ -1,25 +1,28 @@
+// @dart=2.9
 import 'package:budcomapp/Models/ap_model.dart';
 import 'package:budcomapp/Models/driver_model.dart';
 import 'package:budcomapp/Services/database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/widgets.dart';
+import 'package:uuid/uuid.dart';
 
 class DriverProvider with ChangeNotifier {
   final firestoreService = FirestoreService();
-  String? _id;
-  String? _name;
-  String? _email;
-  String? _number;
-  String? _photo;
-  String? _role;
-  DocumentReference? _route;
+  String _id;
+  String _name;
+  String _email;
+  String _number;
+  String _photo;
+  String _role;
+  String _route;
+  var uuid = Uuid();
   //Getters
-  String? get name => _name;
-  String? get email => _email;
-  String? get number => _number;
-  String? get photo => _photo;
-  String? get role => _role;
-  DocumentReference? get route => _route;
+  String get name => _name;
+  String get email => _email;
+  String get number => _number;
+  String get photo => _photo;
+  String get role => _role;
+  String get route => _route;
 
   Stream<List<Driver_Model>> get entries => firestoreService.getDrivers();
 
@@ -49,7 +52,7 @@ class DriverProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  set ChangeRoute(DocumentReference route) {
+  set ChangeRoute(String route) {
     _route = route;
     notifyListeners();
   }
@@ -79,25 +82,25 @@ class DriverProvider with ChangeNotifier {
     if (_id == null) {
       //Add
       var newEntry = Driver_Model(
-          id: _id!,
-          name: _name!,
-          email: _email!,
-          number: _number!,
-          photo: _photo!,
-          role: _role!,
-          route: _route!);
+          id: uuid.v1(),
+          name: _name,
+          email: _email,
+          number: _number,
+          photo: _photo,
+          role: _role,
+          route: _route);
       print(newEntry.name);
       firestoreService.setDriver(newEntry);
     } else {
       //Edit
       var updatedEntry = Driver_Model(
-          id: _id!,
-          name: _name!,
-          email: _email!,
-          number: _number!,
-          photo: _photo!,
-          role: _role!,
-          route: _route!);
+          id: _id,
+          name: _name,
+          email: _email,
+          number: _number,
+          photo: _photo,
+          role: _role,
+          route: _route);
       print(updatedEntry.name);
       firestoreService.setDriver(updatedEntry);
     }

@@ -1,19 +1,15 @@
 import 'dart:async';
-import 'package:budcomapp/GetCurrentUser.dart';
 import 'package:budcomapp/Models/ap_job_model.dart';
-import 'package:budcomapp/Providers/driver_provider.dart';
-import 'package:budcomapp/admin_panel.dart';
+import 'package:budcomapp/Views/admin_panel.dart';
 import 'package:budcomapp/get_job_list.dart';
-import 'package:budcomapp/signin_page.dart';
+import 'package:budcomapp/Views/signin_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_signin_button/button_builder.dart';
-import 'package:provider/src/provider.dart';
 
 import '../main.dart';
-import '../register_page.dart';
+import 'register_page.dart';
 
 class UserInformation extends StatefulWidget {
   const UserInformation({Key? key}) : super(key: key);

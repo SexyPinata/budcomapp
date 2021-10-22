@@ -53,26 +53,6 @@ class _GetJobListState extends State<GetJobList> {
         toFirestore: (newDriver, _) => newDriver.toMap(),
       );
 
-  Future<Widget> _getUserDoc() async {
-    List<QueryDocumentSnapshot<Driver_Model>> drivers = await driversRef
-        .where('Email', isEqualTo: widget.driverEmail)
-        .get()
-        .then((snapshot) => snapshot.docs);
-    print(drivers.length);
-
-    Route_Model route = await routesRef
-        .doc(drivers.first.data().route.id)
-        .get()
-        .then((snapshot) => snapshot.data()!);
-    print(route.list_of_aps);
-    Stream<QuerySnapshot> _apJobStream = FirebaseFirestore.instance
-        .collection('AccessPoint')
-        .where("Name", whereIn: route.list_of_aps)
-        .snapshots();
-    var wid = _build(context, _apJobStream);
-    return wid;
-  }
-
   Widget _build(BuildContext context, Stream<QuerySnapshot> teststream) {
     return StreamBuilder<List<ApModel>>(
       stream: entryProvider.entries,
@@ -92,13 +72,6 @@ class _GetJobListState extends State<GetJobList> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: _getUserDoc(),
-      builder: (BuildContext context, AsyncSnapshot<Widget> snapshot) {
-        if (!snapshot.hasData) return Text('No data');
-        if (snapshot.hasError) return Text('Error');
-        return snapshot.data!;
-      },
-    );
+    return Text('data');
   }
 }

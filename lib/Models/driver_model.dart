@@ -1,6 +1,8 @@
+// @dart=2.9
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 class Driver_Model {
   String id;
@@ -9,25 +11,25 @@ class Driver_Model {
   String number;
   String photo;
   String role;
-  DocumentReference route;
+  String route;
   Driver_Model({
-    required this.id,
-    required this.name,
-    required this.email,
-    required this.number,
-    required this.photo,
-    required this.role,
-    required this.route,
+    @required this.id,
+    this.name,
+    this.email,
+    this.number,
+    this.photo,
+    this.role,
+    @required this.route,
   });
 
   Driver_Model copyWith({
-    String? id,
-    String? name,
-    String? email,
-    String? number,
-    String? photo,
-    String? role,
-    DocumentReference? route,
+    String id,
+    String name,
+    String email,
+    String number,
+    String photo,
+    String role,
+    String route,
   }) {
     return Driver_Model(
       id: id ?? this.id,
@@ -60,7 +62,7 @@ class Driver_Model {
       number: map['Phone_Number'],
       photo: map['Photo'],
       role: map['Role'],
-      route: map['Route'] as DocumentReference,
+      route: map['Route'],
     );
   }
 

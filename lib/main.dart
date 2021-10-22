@@ -1,19 +1,13 @@
+// @dart=2.9
 import 'dart:async';
-import 'package:budcomapp/GetCurrentUser.dart';
 import 'package:budcomapp/Providers/accesspoint_provider.dart';
+import 'package:budcomapp/Providers/assignment_provider.dart';
 import 'package:budcomapp/Providers/driver_provider.dart';
-import 'package:budcomapp/admin_panel.dart';
-import 'package:budcomapp/get_job_list.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:budcomapp/Providers/route_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import './register_page.dart';
-import './signin_page.dart';
-import 'GetUserRoute.dart';
-import 'Models/ap_job_model.dart';
-import 'package:flutter_signin_button/button_builder.dart';
 
 import 'Views/home_page_view.dart';
 
@@ -27,6 +21,8 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => DriverProvider()),
         ChangeNotifierProvider(create: (_) => AccessPointProvider()),
+        ChangeNotifierProvider(create: (_) => RouteProvider()),
+        ChangeNotifierProvider(create: (_) => AssignmentProvider()),
       ],
       child: MyApp(),
     ),
@@ -36,7 +32,7 @@ Future<void> main() async {
 FirebaseAuth auth = FirebaseAuth.instance;
 
 class MyApp extends StatelessWidget {
-  MyApp({Key? key}) : super(key: key);
+  MyApp({Key key}) : super(key: key);
 
   // This widget is the root of your application.
   @override
