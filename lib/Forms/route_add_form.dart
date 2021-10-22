@@ -126,8 +126,7 @@ class RouteAddFormState extends State<RouteAddForm> {
                           Route_Model.fromJson(snapshot.data()!),
                       toFirestore: (newDriver, _) => newDriver.toJson(),
                     );
-                await docAddRef
-                    .add(Route_Model(list_of_aps: _selectedAps!, name: _name!));
+                // Add function here
                 Navigator.pop(context);
                 //Send to API
               },

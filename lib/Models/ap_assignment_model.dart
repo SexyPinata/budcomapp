@@ -1,11 +1,13 @@
 import 'dart:convert';
 
 class ApAssignment {
+  String id;
   String name;
   String address;
   String awb;
   bool pending;
   ApAssignment({
+    required this.id,
     required this.name,
     required this.address,
     required this.awb,
@@ -13,12 +15,14 @@ class ApAssignment {
   });
 
   ApAssignment copyWith({
+    String? id,
     String? name,
     String? address,
     String? awb,
     bool? pending,
   }) {
     return ApAssignment(
+      id: id ?? this.id,
       name: name ?? this.name,
       address: address ?? this.address,
       awb: awb ?? this.awb,
@@ -28,19 +32,21 @@ class ApAssignment {
 
   Map<String, dynamic> toMap() {
     return {
-      'name': name,
-      'address': address,
-      'awb': awb,
-      'pending': pending,
+      'Id': id,
+      'Name': name,
+      'Address': address,
+      'Awb': awb,
+      'Pending': pending,
     };
   }
 
   factory ApAssignment.fromMap(Map<String, dynamic> map) {
     return ApAssignment(
-      name: map['name'],
-      address: map['address'],
-      awb: map['awb'],
-      pending: map['pending'],
+      id: map['Id'],
+      name: map['Name'],
+      address: map['Address'],
+      awb: map['Awb'],
+      pending: map['Pending'],
     );
   }
 
@@ -51,7 +57,7 @@ class ApAssignment {
 
   @override
   String toString() {
-    return 'ApAssignment(name: $name, address: $address, awb: $awb, pending: $pending)';
+    return 'ApAssignment(Id: $id, Name: $name, Address: $address, Awb: $awb, Pending: $pending)';
   }
 
   @override
@@ -59,9 +65,19 @@ class ApAssignment {
     if (identical(this, other)) return true;
 
     return other is ApAssignment &&
+        other.id == id &&
         other.name == name &&
         other.address == address &&
         other.awb == awb &&
         other.pending == pending;
+  }
+
+  @override
+  int get hashCode {
+    return id.hashCode ^
+        name.hashCode ^
+        address.hashCode ^
+        awb.hashCode ^
+        pending.hashCode;
   }
 }
