@@ -2,32 +2,45 @@
 import 'dart:io';
 
 import 'package:budcomapp/Models/driver_model.dart';
+import 'package:budcomapp/Models/route_model.dart';
 import 'package:budcomapp/Providers/driver_provider.dart';
+import 'package:budcomapp/Providers/route_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:multi_select_flutter/dialog/multi_select_dialog_field.dart';
+import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:path/path.dart' as path;
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:flutter_blurhash/flutter_blurhash.dart';
 
 class DriverEntryScreen extends StatefulWidget {
-  Driver_Model entry;
-
   // ignore: use_key_in_widget_constructors
   DriverEntryScreen({this.entry});
+
+  Driver_Model entry;
 
   @override
   _EntryScreenState createState() => _EntryScreenState();
 }
 
 class _EntryScreenState extends State<DriverEntryScreen> {
+  bool editMode = false;
   final entryController = TextEditingController();
-  final entryNameController = TextEditingController();
   final entryEmailController = TextEditingController();
+  final entryNameController = TextEditingController();
   final entryPhoneController = TextEditingController();
   final entryRoleController = TextEditingController();
-  bool editMode = false;
+  String fileName;
+  File imageFile;
+  bool isImagePicked = false;
+  PickedFile pickedImage;
+  List<Object> _selectedAps;
+  firebase_storage.FirebaseStorage storage =
+      firebase_storage.FirebaseStorage.instance;
+
   @override
   void dispose() {
     entryController.dispose();
@@ -41,13 +54,17 @@ class _EntryScreenState extends State<DriverEntryScreen> {
   @override
   void initState() {
     final entryProvider = Provider.of<DriverProvider>(context, listen: false);
+    final routeProvider = Provider.of<RouteProvider>(context, listen: false);
+
     if (widget.entry != null) {
       //Edit
       entryController.text = widget.entry.email;
       entryNameController.text = widget.entry.name;
       entryPhoneController.text = widget.entry.number;
       entryRoleController.text = widget.entry.role;
-
+      routeProvider.setId = widget.entry.route;
+      var routeEntry = routeProvider.entrie;
+      routeProvider.loadAll(routeEntry);
       entryProvider.loadAll(widget.entry);
     } else {
       //Add
@@ -56,12 +73,6 @@ class _EntryScreenState extends State<DriverEntryScreen> {
     super.initState();
   }
 
-  firebase_storage.FirebaseStorage storage =
-      firebase_storage.FirebaseStorage.instance;
-
-  String fileName;
-  File imageFile;
-  PickedFile pickedImage;
   Future<void> _picker(String inputSource) async {
     pickedImage;
     try {
@@ -74,6 +85,7 @@ class _EntryScreenState extends State<DriverEntryScreen> {
       fileName = path.basename(pickedImage.path);
       setState(() {
         imageFile = File(pickedImage.path);
+        isImagePicked = true;
       });
     } catch (err) {
       print(err);
@@ -96,149 +108,18 @@ class _EntryScreenState extends State<DriverEntryScreen> {
     }
   }
 
-  @override
-  Widget _build(BuildContext context) {
-    final entryProvider = Provider.of<DriverProvider>(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(entryProvider.name), actions: [
-        IconButton(
-          icon: Icon(Icons.person),
-          onPressed: () {
-            _displayTextInputDialog(context).then((value) {
-              if (value != null) {
-                entryProvider.changeName = value;
-              }
-            });
-          },
-        )
-      ]),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: ListView(
-          children: [
-            TextField(
-              decoration: const InputDecoration(
-                labelText: 'Daily Entry',
-                border: InputBorder.none,
-              ),
-              maxLines: 12,
-              minLines: 10,
-              onChanged: (String value) => entryProvider.changeName = value,
-              controller: entryController,
-            ),
-            RaisedButton(
-              color: Theme.of(context).accentColor,
-              child: const Text('Save', style: TextStyle(color: Colors.white)),
-              onPressed: () {
-                entryProvider.saveEntry();
-                Navigator.of(context).pop();
-              },
-            ),
-            (widget.entry != null)
-                ? RaisedButton(
-                    color: Colors.red,
-                    child:
-                        Text('Delete', style: TextStyle(color: Colors.white)),
-                    onPressed: () {
-                      entryProvider.removeEntry(widget.entry.id);
-                      Navigator.of(context).pop();
-                    },
-                  )
-                : Container(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final entryProvider = Provider.of<DriverProvider>(context);
-    return Scaffold(
-        backgroundColor: Colors.grey.shade900,
-        extendBodyBehindAppBar: true,
-        extendBody: true,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-        ),
-        body: SingleChildScrollView(
-          child: Column(
-            children: <Widget>[
-              ProfileHeader(
-                avatar: CachedNetworkImage(
-                  imageUrl: entryProvider.photo,
-                  imageBuilder: (context, imageProvider) => Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      image: DecorationImage(
-                        image: imageProvider,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  placeholder: (context, url) => CircularProgressIndicator(),
-                  errorWidget: (context, url, error) => Icon(Icons.error),
-                ),
-                coverImage: CachedNetworkImage(
-                  imageUrl: entryProvider.photo,
-                  imageBuilder: (context, imageProvider) => Container(
-                    decoration: BoxDecoration(
-                      image: DecorationImage(
-                        image: imageProvider,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  placeholder: (context, url) => CircularProgressIndicator(),
-                  errorWidget: (context, url, error) => Icon(Icons.error),
-                ),
-                title: entryProvider.name ?? '',
-                subtitle: entryProvider.role,
-                actions: <Widget>[
-                  editMode
-                      ? MaterialButton(
-                          color: Colors.redAccent,
-                          shape: CircleBorder(),
-                          elevation: 0,
-                          child: Icon(Icons.save),
-                          onPressed: () {
-                            setState(() {
-                              editMode = !editMode;
-                            });
-                          },
-                        )
-                      : MaterialButton(
-                          color: Colors.redAccent,
-                          shape: CircleBorder(),
-                          elevation: 0,
-                          child: Icon(Icons.edit),
-                          onPressed: () {
-                            setState(() {
-                              editMode = !editMode;
-                            });
-                          },
-                        )
-                ],
-              ),
-              const SizedBox(height: 10.0),
-              _UserInfo(context),
-              _UserInfo(context),
-            ],
-          ),
-        ));
-  }
-
+  // ignore: non_constant_identifier_names
   Widget _UserInfo(BuildContext context) {
     final entryProvider = Provider.of<DriverProvider>(context);
+    final routeProvider = Provider.of<RouteProvider>(context);
     return Container(
-      padding: EdgeInsets.all(10),
+      padding: const EdgeInsets.all(10),
       child: Column(
         children: <Widget>[
           Container(
             padding: const EdgeInsets.only(left: 8.0, bottom: 4.0),
             alignment: Alignment.topLeft,
-            child: Text(
+            child: const Text(
               "User Information",
               style: TextStyle(
                 color: Colors.redAccent,
@@ -251,7 +132,7 @@ class _EntryScreenState extends State<DriverEntryScreen> {
           Card(
             child: Container(
               alignment: Alignment.topLeft,
-              padding: EdgeInsets.all(15),
+              padding: const EdgeInsets.all(15),
               child: Column(
                 children: <Widget>[
                   Column(
@@ -260,13 +141,13 @@ class _EntryScreenState extends State<DriverEntryScreen> {
                         color: Colors.grey,
                         tiles: [
                           ListTile(
-                            leading: Icon(Icons.text_fields),
-                            title: Text("Name"),
+                            leading: const Icon(Icons.text_fields),
+                            title: const Text("Name"),
                             subtitle: editMode
                                 ? TextField(
                                     decoration: const InputDecoration(
                                       border: OutlineInputBorder(
-                                          borderRadius: const BorderRadius.all(
+                                          borderRadius: BorderRadius.all(
                                               Radius.circular(4.0))),
                                     ),
                                     onChanged: (String value) =>
@@ -276,13 +157,13 @@ class _EntryScreenState extends State<DriverEntryScreen> {
                                 : Text(entryProvider.name ?? ''),
                           ),
                           ListTile(
-                            leading: Icon(Icons.email),
-                            title: Text("Email"),
+                            leading: const Icon(Icons.email),
+                            title: const Text("Email"),
                             subtitle: editMode
                                 ? TextField(
                                     decoration: const InputDecoration(
                                       border: OutlineInputBorder(
-                                          borderRadius: const BorderRadius.all(
+                                          borderRadius: BorderRadius.all(
                                               Radius.circular(4.0))),
                                     ),
                                     onChanged: (String value) =>
@@ -292,13 +173,13 @@ class _EntryScreenState extends State<DriverEntryScreen> {
                                 : Text(entryProvider.email ?? ''),
                           ),
                           ListTile(
-                            leading: Icon(Icons.phone),
-                            title: Text("Phone"),
+                            leading: const Icon(Icons.phone),
+                            title: const Text("Phone"),
                             subtitle: editMode
                                 ? TextField(
                                     decoration: const InputDecoration(
                                       border: OutlineInputBorder(
-                                          borderRadius: const BorderRadius.all(
+                                          borderRadius: BorderRadius.all(
                                               Radius.circular(4.0))),
                                     ),
                                     onChanged: (String value) =>
@@ -308,13 +189,13 @@ class _EntryScreenState extends State<DriverEntryScreen> {
                                 : Text(entryProvider.number ?? ''),
                           ),
                           ListTile(
-                            leading: Icon(Icons.person),
-                            title: Text("Role"),
+                            leading: const Icon(Icons.person),
+                            title: const Text("Role"),
                             subtitle: editMode
                                 ? TextField(
                                     decoration: const InputDecoration(
                                       border: OutlineInputBorder(
-                                          borderRadius: const BorderRadius.all(
+                                          borderRadius: BorderRadius.all(
                                               Radius.circular(4.0))),
                                     ),
                                     onChanged: (String value) =>
@@ -325,8 +206,47 @@ class _EntryScreenState extends State<DriverEntryScreen> {
                           ),
                           ListTile(
                             leading: Icon(Icons.location_city),
-                            title: Text("Location"),
-                            subtitle: Text("Sweden"),
+                            title: Text("Routes"),
+                            subtitle: editMode
+                                ? StreamBuilder<List<Route_Model>>(
+                                    stream: routeProvider.entries,
+                                    builder: (context, snapshot) {
+                                      if (snapshot.hasError) {
+                                        return Text('Something went wrong');
+                                      }
+
+                                      if (snapshot.connectionState ==
+                                          ConnectionState.waiting) {
+                                        return Text("Loading");
+                                      }
+
+                                      return MultiSelectDialogField(
+                                        buttonText: Text('Routes'),
+                                        buttonIcon:
+                                            const Icon(Icons.arrow_downward),
+                                        unselectedColor: Colors.white,
+                                        selectedColor: Colors.redAccent,
+                                        selectedItemsTextStyle:
+                                            TextStyle(color: Colors.redAccent),
+                                        //backgroundColor: Colors.white,
+                                        itemsTextStyle:
+                                            TextStyle(color: Colors.white),
+                                        items: snapshot.data.map((route) {
+                                          return MultiSelectItem(
+                                            route.name,
+                                            route.name,
+                                          );
+                                        }).toList(),
+                                        onConfirm: (labels) {
+                                          _selectedAps = labels;
+                                          entryProvider.ChangeRoute =
+                                              labels.join(", ");
+                                          print(labels);
+                                        },
+                                      );
+                                    },
+                                  )
+                                : Text(entryProvider.route),
                           ),
                         ],
                       ),
@@ -341,62 +261,154 @@ class _EntryScreenState extends State<DriverEntryScreen> {
     );
   }
 
-  Future<String> _displayTextInputDialog(BuildContext context) async {
-    String valueText;
-    return showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text('TextField in Dialog'),
-            content: TextField(
-              onChanged: (value) {
-                setState(() {
-                  valueText = value;
-                });
-              },
-              controller: entryController,
-              decoration: InputDecoration(hintText: "Text Field in Dialog"),
-            ),
-            actions: <Widget>[
-              FlatButton(
-                color: Colors.red,
-                textColor: Colors.white,
-                child: Text('CANCEL'),
-                onPressed: () {
-                  setState(() {
-                    Navigator.pop(context);
-                  });
+  @override
+  Widget build(BuildContext context) {
+    final entryProvider = Provider.of<DriverProvider>(context);
+    return Scaffold(
+        backgroundColor: Colors.grey.shade900,
+        extendBodyBehindAppBar: true,
+        extendBody: true,
+        body: SingleChildScrollView(
+          child: Column(
+            children: <Widget>[
+              GestureDetector(
+                onTap: () {
+                  editMode
+                      ? showDialog<String>(
+                          context: context,
+                          builder: (BuildContext context) => SimpleDialog(
+                            title: const Text('Select Image'),
+                            children: <Widget>[
+                              ListTile(
+                                leading: const Icon(Icons.account_circle),
+                                title: const Text('Gallery'),
+                                onTap: () {
+                                  Navigator.pop(context, 'gallery');
+                                },
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.account_circle),
+                                title: const Text('Camera'),
+                                onTap: () {
+                                  Navigator.pop(context, 'camera');
+                                },
+                              ),
+                            ],
+                          ),
+                        ).then((returnVal) async {
+                          if (returnVal != null) {
+                            await _picker(returnVal);
+                            setState(() {});
+                          }
+                        })
+                      : null;
                 },
+                child: ProfileHeader(
+                  avatar: CachedNetworkImage(
+                    imageUrl: entryProvider.photo,
+                    imageBuilder: (context, imageProvider) => Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        image: DecorationImage(
+                          image: imageProvider,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    placeholder: (context, url) =>
+                        BlurHash(hash: "L5H2EC=PM+yV0g-mq.wG9c010J}I"),
+                    errorWidget: (context, url, error) =>
+                        Image.memory(kTransparentImage),
+                  ),
+                  coverImage: CachedNetworkImage(
+                    imageUrl: entryProvider.photo,
+                    imageBuilder: (context, imageProvider) => Container(
+                      decoration: BoxDecoration(
+                        image: DecorationImage(
+                          image: imageProvider,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    placeholder: (context, url) => isImagePicked
+                        ? Image.file(
+                            imageFile,
+                            alignment: Alignment.center,
+                            height: double.infinity,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          )
+                        : BlurHash(hash: "L5H2EC=PM+yV0g-mq.wG9c010J}I"),
+                    errorWidget: (context, url, error) => isImagePicked
+                        ? Image.file(
+                            imageFile,
+                            alignment: Alignment.center,
+                            height: double.infinity,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          )
+                        : BlurHash(hash: "L5H2EC=PM+yV0g-mq.wG9c010J}I"),
+                  ),
+                  title: entryProvider.name ?? '',
+                  subtitle: entryProvider.role,
+                  actions: <Widget>[
+                    editMode
+                        ? MaterialButton(
+                            color: Colors.redAccent,
+                            shape: CircleBorder(),
+                            elevation: 0,
+                            child: const Icon(Icons.save),
+                            onPressed: () async {
+                              isImagePicked
+                                  ? entryProvider.changePhoto = await _upload()
+                                  : null;
+                              entryProvider.saveEntry();
+                              setState(() {
+                                editMode = !editMode;
+                              });
+                            },
+                          )
+                        : MaterialButton(
+                            color: Colors.redAccent,
+                            shape: const CircleBorder(),
+                            elevation: 0,
+                            child: Icon(Icons.edit),
+                            onPressed: () {
+                              setState(() {
+                                editMode = !editMode;
+                              });
+                            },
+                          )
+                  ],
+                ),
               ),
-              FlatButton(
-                color: Colors.green,
-                textColor: Colors.white,
-                child: Text('OK'),
-                onPressed: () {
-                  return valueText;
-                },
-              ),
+              const SizedBox(height: 10.0),
+              _UserInfo(context),
+              _UserInfo(context),
             ],
-          );
-        });
+          ),
+        ));
   }
 }
 
 class ProfileHeader extends StatelessWidget {
-  final CachedNetworkImage coverImage;
-  final CachedNetworkImage avatar;
-  final String title;
-  final String subtitle;
-  final List<Widget> actions;
-
   const ProfileHeader(
       {Key key,
+      this.gestureDetector,
       this.coverImage,
       this.avatar,
       this.title,
       this.subtitle,
       this.actions})
       : super(key: key);
+
+  final List<Widget> actions;
+  final CachedNetworkImage avatar;
+  final CachedNetworkImage coverImage;
+  final GestureDetector gestureDetector;
+  final String subtitle;
+  final String title;
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -456,12 +468,6 @@ class ProfileHeader extends StatelessWidget {
 }
 
 class Avatar extends StatelessWidget {
-  final CachedNetworkImage image;
-  final Color borderColor;
-  final Color backgroundColor;
-  final double radius;
-  final double borderWidth;
-
   const Avatar(
       {Key key,
       this.image,
@@ -471,19 +477,26 @@ class Avatar extends StatelessWidget {
       this.borderWidth = 5})
       : super(key: key);
 
+  final Color backgroundColor;
+  final Color borderColor;
+  final double borderWidth;
+  final CachedNetworkImage image;
+  final double radius;
+
   @override
   Widget build(BuildContext context) {
-    return CircleAvatar(
-      radius: radius + borderWidth,
-      backgroundColor: borderColor,
+    return GestureDetector(
+      onTap: () {},
       child: CircleAvatar(
-        radius: radius,
-        backgroundColor: backgroundColor != null
-            ? backgroundColor
-            : Theme.of(context).primaryColor,
+        radius: radius + borderWidth,
+        backgroundColor: borderColor,
         child: CircleAvatar(
-          radius: radius - borderWidth,
-          child: image,
+          radius: radius,
+          backgroundColor: backgroundColor ?? Theme.of(context).primaryColor,
+          child: CircleAvatar(
+            radius: radius - borderWidth,
+            child: image,
+          ),
         ),
       ),
     );

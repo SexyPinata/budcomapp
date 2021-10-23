@@ -16,6 +16,14 @@ class FirestoreService {
     });
   }
 
+  Future<Route_Model> getRoute(String routeId) {
+    return _db
+        .collection('Routes')
+        .doc(routeId)
+        .get()
+        .then((value) => Route_Model.fromJson(value.data()!));
+  }
+
   //Upsert
   Future<void> setRoute(Route_Model entry) {
     var options = SetOptions(merge: true);

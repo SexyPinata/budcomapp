@@ -13,10 +13,10 @@ class Route_Model {
       : this(
           list_of_aps: json['List_Of_Aps']! as List<Object?>,
           name: json['Name']! as String,
-          id: json['Id']! as String,
+          id: json['id']! as String,
         );
 
   Map<String, Object?> toJson() {
-    return {'List_Of_Aps': list_of_aps, 'Name': name, 'Id': id};
+    return {'List_Of_Aps': list_of_aps, 'Name': name, 'id': id};
   }
 }

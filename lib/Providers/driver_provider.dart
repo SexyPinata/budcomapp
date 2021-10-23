@@ -15,7 +15,7 @@ class DriverProvider with ChangeNotifier {
   String _photo;
   String _role;
   String _route;
-  var uuid = Uuid();
+  var uuid = const Uuid();
   //Getters
   String get name => _name;
   String get email => _email;
