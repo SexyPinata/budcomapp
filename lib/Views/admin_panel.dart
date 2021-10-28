@@ -1,9 +1,12 @@
 // ignore_for_file: camel_case_types
 
-import 'dart:ffi';
-
-import 'package:budcomapp/Forms/route_add_form.dart';
-import 'package:budcomapp/Forms/route_update_form.dart';
+import 'dart:convert';
+import 'dart:developer';
+import 'package:budcomapp/Models/ap_data_raw_model.dart';
+import 'package:budcomapp/Models/ap_model.dart';
+import 'package:budcomapp/Providers/accesspoint_provider.dart';
+import 'package:budcomapp/Providers/assignment_provider.dart';
+import 'package:excel_to_json/excel_to_json.dart';
 import 'package:budcomapp/Models/driver_model.dart';
 import 'package:budcomapp/Models/route_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -12,6 +15,7 @@ import 'package:provider/provider.dart';
 
 import '../Providers/driver_provider.dart';
 import 'driver_entry.dart';
+import 'route_entry.dart';
 
 class AdminPanel extends StatefulWidget {
   AdminPanel({Key? key}) : super(key: key);
@@ -98,6 +102,7 @@ class _AdminPanelState extends State<AdminPanel>
           child: Scaffold(
         body: _UserInformation(context),
         floatingActionButton: FloatingActionButton.extended(
+          heroTag: '123',
           onPressed: () {
             Navigator.of(context).push(
                 MaterialPageRoute<void>(builder: (_) => DriverEntryScreen()));
@@ -117,7 +122,7 @@ class _AdminPanelState extends State<AdminPanel>
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () {
             Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => DriverEntryScreen()));
+                MaterialPageRoute<void>(builder: (_) => RouteEntryScreen()));
           },
 
           //onPressed: () async {
@@ -128,12 +133,12 @@ class _AdminPanelState extends State<AdminPanel>
           backgroundColor: Colors.redAccent,
         ),
       )),
-      const Center(child: Icon(Icons.forum, size: 64.0, color: Colors.blue)),
+      Center(child: RawAccessPointDataProcessor()),
     ];
     final _kTabs = <Tab>[
-      const Tab(icon: Icon(Icons.people), text: 'Tab1'),
-      const Tab(icon: Icon(Icons.alt_route), text: 'Tab2'),
-      const Tab(icon: Icon(Icons.forum), text: 'Tab3'),
+      const Tab(icon: Icon(Icons.people), text: 'Drivers'),
+      const Tab(icon: Icon(Icons.alt_route), text: 'Routes'),
+      const Tab(icon: Icon(Icons.forum), text: 'Upload'),
     ];
 
     return DefaultTabController(
@@ -219,9 +224,11 @@ class _RouteInfo extends State<RouteInfo> with AutomaticKeepAliveClientMixin {
                               Colors.redAccent)),
                       child: const Text("Edit"),
                       onPressed: () {
-                        _showMaterialDialog(RouteUpdateForm(
-                            model: Route_Model.fromJson(data),
-                            docId: document.id));
+                        Route_Model model = Route_Model.fromJson(data);
+                        Navigator.of(context).push(MaterialPageRoute<void>(
+                            builder: (_) => RouteEntryScreen(
+                                  entry: model,
+                                )));
                       },
                     ),
                     children: <Widget>[
@@ -258,4 +265,99 @@ class _RouteInfo extends State<RouteInfo> with AutomaticKeepAliveClientMixin {
 
   @override
   bool get wantKeepAlive => true;
+}
+
+class RawAccessPointDataProcessor extends StatefulWidget {
+  RawAccessPointDataProcessor({Key? key}) : super(key: key);
+
+  @override
+  _RawAccessPointDataProcessorState createState() =>
+      _RawAccessPointDataProcessorState();
+}
+
+class _RawAccessPointDataProcessorState
+    extends State<RawAccessPointDataProcessor> {
+  @override
+  Widget build(BuildContext context) {
+    final accessPointProvider =
+        Provider.of<AccessPointProvider>(context, listen: false);
+
+    final assignmentProvider =
+        Provider.of<AssignmentProvider>(context, listen: false);
+    List<ApModel> memoryList;
+    var _stream = accessPointProvider.entries;
+    return Container(
+      child: StreamBuilder<List<ApModel>>(
+          stream: _stream,
+          builder:
+              (BuildContext context, AsyncSnapshot<List<ApModel>> snapshot) {
+            return ElevatedButton(
+              child: Text("PRESS TO UPLOAD EXCEL AND CONVERT TO JSON"),
+              onPressed: () {
+                memoryList = snapshot.data!;
+                ExcelToJson().convert().then((onValue) {
+                  Iterable li = json.decode(onValue!);
+                  List<Aprawdatamodel> list = List<Aprawdatamodel>.from(
+                      li.map((e) => Aprawdatamodel.fromMap(e)));
+                  log(onValue.toString());
+                  for (var item in list) {
+                    bool isPresent = false;
+                    for (var accessPoint in memoryList) {
+                      if (item.AP_Number == accessPoint.number) {
+                        isPresent = true;
+                        assignmentProvider.changeAddress = (item.Cnee_Address +
+                            ' ' +
+                            item.Cnee_City +
+                            ' ' +
+                            item.Cnee_PostalCode);
+                        assignmentProvider.changeName = item.Cnee_Name;
+                        assignmentProvider.changeAwb = item.Trackingnumber;
+                        assignmentProvider.changePending = true;
+                        log('Adding: ' +
+                            item.Trackingnumber +
+                            ' || To the Access Point ' +
+                            accessPoint.name);
+                        assignmentProvider.saveEntry(accessPoint);
+                      }
+                    }
+                    if (!isPresent) {
+                      log(item.AP_Name + ' was not found, adding');
+                      var model = ApModel(
+                          id: '123',
+                          name: item.AP_Name,
+                          city: item.AP_City,
+                          street: item.AP_Address,
+                          zip: item.AP_PostCode,
+                          number: item.AP_Number);
+                      memoryList.add(model);
+                      accessPointProvider.changeCity = item.AP_City;
+                      accessPointProvider.changeName = item.AP_Name;
+                      accessPointProvider.changeNumber = item.AP_Number;
+                      accessPointProvider.changeStreet = item.AP_Address;
+                      accessPointProvider.changeZip = item.AP_PostCode;
+                      accessPointProvider.saveEntry();
+                    }
+                    if (isPresent) {}
+                  }
+                });
+              },
+            );
+            /*   return TextField(
+              keyboardType: TextInputType.multiline,
+              maxLines: null,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (String value) {
+                LineSplitter ls = const LineSplitter();
+                List<String> lines = ls.convert(value);
+                lines.removeWhere((element) => element.isEmpty);
+                var partitions = partition(lines, 10);
+                print("---Result---");
+                for (var item in partitions) {}
+                var xlsx = ExcelToJson();
+              },
+            );
+*/
+          }),
+    );
+  }
 }

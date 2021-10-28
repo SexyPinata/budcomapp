@@ -1,8 +1,11 @@
 // @dart=2.9
 import 'dart:io';
+import 'dart:math';
 
+import 'package:budcomapp/Models/ap_model.dart';
 import 'package:budcomapp/Models/driver_model.dart';
 import 'package:budcomapp/Models/route_model.dart';
+import 'package:budcomapp/Providers/accesspoint_provider.dart';
 import 'package:budcomapp/Providers/driver_provider.dart';
 import 'package:budcomapp/Providers/route_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -16,17 +19,17 @@ import 'package:path/path.dart' as path;
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:flutter_blurhash/flutter_blurhash.dart';
 
-class DriverEntryScreen extends StatefulWidget {
+class RouteEntryScreen extends StatefulWidget {
   // ignore: use_key_in_widget_constructors
-  DriverEntryScreen({this.entry});
+  RouteEntryScreen({this.entry});
 
-  Driver_Model entry;
+  Route_Model entry;
 
   @override
   _EntryScreenState createState() => _EntryScreenState();
 }
 
-class _EntryScreenState extends State<DriverEntryScreen> {
+class _EntryScreenState extends State<RouteEntryScreen> {
   bool editMode = false;
   final entryController = TextEditingController();
   final entryEmailController = TextEditingController();
@@ -37,7 +40,8 @@ class _EntryScreenState extends State<DriverEntryScreen> {
   File imageFile;
   bool isImagePicked = false;
   PickedFile pickedImage;
-  Route_Model selectedRoute;
+  List<dynamic> _selectedAps = [];
+  List<ApModelMini> _apMiniList = [];
   firebase_storage.FirebaseStorage storage =
       firebase_storage.FirebaseStorage.instance;
 
@@ -53,24 +57,20 @@ class _EntryScreenState extends State<DriverEntryScreen> {
 
   @override
   void initState() {
-    final entryProvider = Provider.of<DriverProvider>(context, listen: false);
     final routeProvider = Provider.of<RouteProvider>(context, listen: false);
 
     if (widget.entry != null) {
       //Edit
-      entryController.text = widget.entry.email;
+      _selectedAps = widget.entry.list_of_aps;
+      print(_selectedAps);
+      _apMiniList = List<ApModelMini>.from(
+          _selectedAps.map((e) => ApModelMini.fromMap(e)));
       entryNameController.text = widget.entry.name;
-      entryPhoneController.text = widget.entry.number;
-      entryRoleController.text = widget.entry.role;
-      routeProvider.setId = widget.entry.route;
-      var routeEntry = routeProvider.entrie;
-      Future.delayed(Duration.zero, () async {
-        routeProvider.loadAll(await routeEntry);
-      });
-      entryProvider.loadAll(widget.entry);
+
+      routeProvider.loadAll(widget.entry);
     } else {
       //Add
-      entryProvider.loadAll(null);
+      routeProvider.loadAll(null);
     }
     super.initState();
   }
@@ -111,9 +111,9 @@ class _EntryScreenState extends State<DriverEntryScreen> {
   }
 
   // ignore: non_constant_identifier_names
-  Widget _UserInfo(BuildContext context) {
-    final entryProvider = Provider.of<DriverProvider>(context);
+  Widget _RouteInfo(BuildContext context) {
     final routeProvider = Provider.of<RouteProvider>(context);
+    final accessPointProvider = Provider.of<AccessPointProvider>(context);
     return Container(
       padding: const EdgeInsets.all(10),
       child: Column(
@@ -143,8 +143,8 @@ class _EntryScreenState extends State<DriverEntryScreen> {
                         color: Colors.grey,
                         tiles: [
                           ListTile(
-                            leading: const Icon(Icons.text_fields),
-                            title: const Text("Name"),
+                            leading: const Icon(Icons.location_city),
+                            title: const Text("Route Name"),
                             subtitle: editMode
                                 ? TextField(
                                     decoration: const InputDecoration(
@@ -153,65 +153,17 @@ class _EntryScreenState extends State<DriverEntryScreen> {
                                               Radius.circular(4.0))),
                                     ),
                                     onChanged: (String value) =>
-                                        entryProvider.changeName = value,
+                                        routeProvider.changeName = value,
                                     controller: entryNameController,
                                   )
-                                : Text(entryProvider.name ?? ''),
+                                : Text(routeProvider.name ?? ''),
                           ),
                           ListTile(
                             leading: const Icon(Icons.email),
-                            title: const Text("Email"),
+                            title: const Text("Access Points"),
                             subtitle: editMode
-                                ? TextField(
-                                    decoration: const InputDecoration(
-                                      border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(4.0))),
-                                    ),
-                                    onChanged: (String value) =>
-                                        entryProvider.changeEmail = value,
-                                    controller: entryEmailController,
-                                  )
-                                : Text(entryProvider.email ?? ''),
-                          ),
-                          ListTile(
-                            leading: const Icon(Icons.phone),
-                            title: const Text("Phone"),
-                            subtitle: editMode
-                                ? TextField(
-                                    decoration: const InputDecoration(
-                                      border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(4.0))),
-                                    ),
-                                    onChanged: (String value) =>
-                                        entryProvider.changeNumber = value,
-                                    controller: entryPhoneController,
-                                  )
-                                : Text(entryProvider.number ?? ''),
-                          ),
-                          ListTile(
-                            leading: const Icon(Icons.person),
-                            title: const Text("Role"),
-                            subtitle: editMode
-                                ? TextField(
-                                    decoration: const InputDecoration(
-                                      border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(4.0))),
-                                    ),
-                                    onChanged: (String value) =>
-                                        entryProvider.changeRole = value,
-                                    controller: entryRoleController,
-                                  )
-                                : Text(entryProvider.role ?? ''),
-                          ),
-                          ListTile(
-                            leading: Icon(Icons.location_city),
-                            title: Text("Routes"),
-                            subtitle: editMode
-                                ? StreamBuilder<List<Route_Model>>(
-                                    stream: routeProvider.entries,
+                                ? StreamBuilder<List<ApModel>>(
+                                    stream: accessPointProvider.entries,
                                     builder: (context, snapshot) {
                                       if (snapshot.hasError) {
                                         return Text('Something went wrong');
@@ -223,7 +175,7 @@ class _EntryScreenState extends State<DriverEntryScreen> {
                                       }
 
                                       return MultiSelectDialogField(
-                                        buttonText: Text('Routes'),
+                                        buttonText: Text('Access Points'),
                                         buttonIcon:
                                             const Icon(Icons.arrow_downward),
                                         unselectedColor: Colors.white,
@@ -233,23 +185,37 @@ class _EntryScreenState extends State<DriverEntryScreen> {
                                         //backgroundColor: Colors.white,
                                         itemsTextStyle:
                                             TextStyle(color: Colors.white),
-                                        items: snapshot.data.map((route) {
-                                          return MultiSelectItem<Route_Model>(
-                                            route,
-                                            route.name,
+                                        items: snapshot.data.map((accessPoint) {
+                                          return MultiSelectItem<ApModel>(
+                                            accessPoint,
+                                            accessPoint.name,
                                           );
                                         }).toList(),
-                                        onConfirm: (selectedRoutes) {
-                                          selectedRoute = selectedRoutes.first;
-                                          entryProvider.ChangeRouteId =
-                                              selectedRoute.id;
-                                          entryProvider.ChangeRoute =
-                                              selectedRoute.name;
+
+                                        onConfirm: (List<ApModel>
+                                            selectedAccessPoints) {
+                                          _apMiniList == null
+                                              ? null
+                                              : _apMiniList.clear();
+                                          for (var item
+                                              in selectedAccessPoints) {
+                                            _apMiniList.add(ApModelMini(
+                                                id: item.id, name: item.name));
+                                          }
+                                          _selectedAps = List<dynamic>.from(
+                                              _apMiniList
+                                                  .map((e) => e.toMap()));
+                                          routeProvider.changeList_of_aps =
+                                              _selectedAps;
                                         },
                                       );
                                     },
                                   )
-                                : Text(entryProvider.route ?? ' '),
+                                : _selectedAps == null
+                                    ? Text('')
+                                    : Text(List<dynamic>.from(
+                                            _apMiniList.map((e) => e.name))
+                                        .join(', ')),
                           ),
                         ],
                       ),
@@ -266,7 +232,7 @@ class _EntryScreenState extends State<DriverEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final entryProvider = Provider.of<DriverProvider>(context);
+    final routeProvider = Provider.of<RouteProvider>(context);
     return Scaffold(
         backgroundColor: Colors.grey.shade900,
         extendBodyBehindAppBar: true,
@@ -307,24 +273,8 @@ class _EntryScreenState extends State<DriverEntryScreen> {
                       : null;
                 },
                 child: ProfileHeader(
-                  avatar: CachedNetworkImage(
-                    imageUrl: entryProvider.photo,
-                    imageBuilder: (context, imageProvider) => Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        image: DecorationImage(
-                          image: imageProvider,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                    placeholder: (context, url) =>
-                        BlurHash(hash: "L5H2EC=PM+yV0g-mq.wG9c010J}I"),
-                    errorWidget: (context, url, error) =>
-                        Image.memory(kTransparentImage),
-                  ),
                   coverImage: CachedNetworkImage(
-                    imageUrl: entryProvider.photo,
+                    imageUrl: 'entryProvider.photo',
                     imageBuilder: (context, imageProvider) => Container(
                       decoration: BoxDecoration(
                         image: DecorationImage(
@@ -352,8 +302,7 @@ class _EntryScreenState extends State<DriverEntryScreen> {
                           )
                         : BlurHash(hash: "L5H2EC=PM+yV0g-mq.wG9c010J}I"),
                   ),
-                  title: entryProvider.name ?? '',
-                  subtitle: entryProvider.role,
+                  title: routeProvider.name ?? '',
                   actions: <Widget>[
                     editMode
                         ? MaterialButton(
@@ -362,10 +311,7 @@ class _EntryScreenState extends State<DriverEntryScreen> {
                             elevation: 0,
                             child: const Icon(Icons.save),
                             onPressed: () async {
-                              isImagePicked
-                                  ? entryProvider.changePhoto = await _upload()
-                                  : null;
-                              entryProvider.saveEntry();
+                              routeProvider.saveEntry();
                               setState(() {
                                 editMode = !editMode;
                               });
@@ -386,7 +332,7 @@ class _EntryScreenState extends State<DriverEntryScreen> {
                 ),
               ),
               const SizedBox(height: 10.0),
-              _UserInfo(context),
+              _RouteInfo(context),
             ],
           ),
         ));

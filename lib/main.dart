@@ -4,6 +4,7 @@ import 'package:budcomapp/Providers/accesspoint_provider.dart';
 import 'package:budcomapp/Providers/assignment_provider.dart';
 import 'package:budcomapp/Providers/driver_provider.dart';
 import 'package:budcomapp/Providers/route_provider.dart';
+import 'package:budcomapp/Views/login_view.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -15,8 +16,6 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   runApp(
-    /// Providers are above [MyApp] instead of inside it, so that tests
-    /// can use [MyApp] while mocking the providers
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => DriverProvider()),
@@ -52,9 +51,7 @@ class MyApp extends StatelessWidget {
         colorScheme: const ColorScheme.dark(secondary: Colors.redAccent),
         primarySwatch: Colors.red,
       ),
-      home: MyHomePage(
-        title: 'Budcom',
-      ),
+      home: LoginPage(),
     );
   }
 }

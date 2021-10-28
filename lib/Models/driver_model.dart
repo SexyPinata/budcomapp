@@ -12,6 +12,7 @@ class Driver_Model {
   String photo;
   String role;
   String route;
+  String routeId;
   Driver_Model({
     @required this.id,
     this.name,
@@ -19,7 +20,8 @@ class Driver_Model {
     this.number,
     this.photo,
     this.role,
-    @required this.route,
+    this.route,
+    this.routeId,
   });
 
   Driver_Model copyWith({
@@ -30,6 +32,7 @@ class Driver_Model {
     String photo,
     String role,
     String route,
+    String routeId,
   }) {
     return Driver_Model(
       id: id ?? this.id,
@@ -39,6 +42,7 @@ class Driver_Model {
       photo: photo ?? this.photo,
       role: role ?? this.role,
       route: route ?? this.route,
+      routeId: routeId ?? this.routeId,
     );
   }
 
@@ -51,6 +55,7 @@ class Driver_Model {
       'Photo': photo,
       'Role': role,
       'Route': route,
+      'RouteId': routeId,
     };
   }
 
@@ -63,6 +68,7 @@ class Driver_Model {
       photo: map['Photo'],
       role: map['Role'],
       route: map['Route'],
+      routeId: map['RouteId'],
     );
   }
 
@@ -73,7 +79,7 @@ class Driver_Model {
 
   @override
   String toString() {
-    return 'Driver_Model(id: $id, Driver_Name: $name, Email: $email, Phone_Number: $number, Photo: $photo, Role: $role, Route: $route)';
+    return 'Driver_Model(id: $id, Driver_Name: $name, Email: $email, Phone_Number: $number, Photo: $photo, Role: $role, Route: $route, RouteId: $routeId)';
   }
 
   @override
@@ -87,7 +93,8 @@ class Driver_Model {
         other.number == number &&
         other.photo == photo &&
         other.role == role &&
-        other.route == route;
+        other.route == route &&
+        other.routeId == routeId;
   }
 
   @override
@@ -98,6 +105,7 @@ class Driver_Model {
         number.hashCode ^
         photo.hashCode ^
         role.hashCode ^
-        route.hashCode;
+        route.hashCode ^
+        routeId.hashCode;
   }
 }

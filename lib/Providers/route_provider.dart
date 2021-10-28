@@ -29,7 +29,6 @@ class RouteProvider with ChangeNotifier {
 
   set setId(String value) {
     _id = value;
-    notifyListeners();
   }
 
   //Functions

@@ -38,24 +38,47 @@ class FirestoreService {
 
 //!! Assignment ENRIES
   //Get Entries
-  Stream<List<ApAssignment>> getAssignments() {
-    return _db.collection('drivers').snapshots().map((snapshot) {
+  Stream<List<ApAssignment>> getAssignments(ApModel accessPoint) {
+    return _db
+        .collection('AccessPoints')
+        .doc(accessPoint.id)
+        .collection('Jobs')
+        .snapshots()
+        .map((snapshot) {
       return snapshot.docs
           .map((doc) => ApAssignment.fromMap(doc.data()))
           .toList();
     });
   }
 
+  Future<ApModel> getAccessPoint(String accessPointId) {
+    return _db
+        .collection('AccessPoints')
+        .doc(accessPointId)
+        .get()
+        .then((value) => ApModel.fromMap(value.data()!));
+  }
+
   //Upsert
-  Future<void> setAssignment(ApAssignment entry) {
+  Future<void> setAssignment(ApAssignment entry, ApModel accessPoint) {
     var options = SetOptions(merge: true);
 
-    return _db.collection('drivers').doc(entry.id).set(entry.toMap(), options);
+    return _db
+        .collection('AccessPoints')
+        .doc(accessPoint.id)
+        .collection('Jobs')
+        .doc(entry.id)
+        .set(entry.toMap(), options);
   }
 
   //Delete
-  Future<void> removeAssignment(String entryId) {
-    return _db.collection('drivers').doc(entryId).delete();
+  Future<void> removeAssignment(String entryId, ApModel accessPoint) {
+    return _db
+        .collection('AccessPoints')
+        .doc(accessPoint.id)
+        .collection('Jobs')
+        .doc(entryId)
+        .delete();
   }
 
 //!! User ENRIES
@@ -66,6 +89,14 @@ class FirestoreService {
           .map((doc) => Driver_Model.fromMap(doc.data()))
           .toList();
     });
+  }
+
+  Future<Driver_Model> getDriver(String driverMail) {
+    return _db
+        .collection('drivers')
+        .where('Email', isEqualTo: driverMail)
+        .get()
+        .then((value) => Driver_Model.fromMap(value.docs.first.data()));
   }
 
   //Upsert

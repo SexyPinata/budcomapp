@@ -14,6 +14,7 @@ class DriverProvider with ChangeNotifier {
   String _number;
   String _photo;
   String _role;
+  String _routeId;
   String _route;
   var uuid = const Uuid();
   //Getters
@@ -23,9 +24,10 @@ class DriverProvider with ChangeNotifier {
   String get photo => _photo;
   String get role => _role;
   String get route => _route;
+  String get routeId => _routeId;
 
   Stream<List<Driver_Model>> get entries => firestoreService.getDrivers();
-
+  Future<Driver_Model> get entrie => firestoreService.getDriver(_email);
   //Setters
   set changeName(String name) {
     _name = name;
@@ -57,6 +59,11 @@ class DriverProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  set ChangeRouteId(String routeId) {
+    _routeId = routeId;
+    notifyListeners();
+  }
+
   //Functions
   loadAll(Driver_Model entry) {
     if (entry != null) {
@@ -67,6 +74,7 @@ class DriverProvider with ChangeNotifier {
       _role = entry.role;
       _id = entry.id;
       _route = entry.route;
+      _routeId = entry.routeId;
     } else {
       _name = null;
       _email = null;
@@ -75,6 +83,7 @@ class DriverProvider with ChangeNotifier {
       _role = null;
       _id = null;
       _route = null;
+      _routeId = null;
     }
   }
 
@@ -88,7 +97,8 @@ class DriverProvider with ChangeNotifier {
           number: _number,
           photo: _photo,
           role: _role,
-          route: _route);
+          route: _route,
+          routeId: _routeId);
       print(newEntry.name);
       firestoreService.setDriver(newEntry);
     } else {
@@ -100,7 +110,8 @@ class DriverProvider with ChangeNotifier {
           number: _number,
           photo: _photo,
           role: _role,
-          route: _route);
+          route: _route,
+          routeId: _routeId);
       print(updatedEntry.name);
       firestoreService.setDriver(updatedEntry);
     }

@@ -1,7 +1,10 @@
 // ignore: file_names
+import 'package:budcomapp/Models/ap_assignment_model.dart';
 import 'package:budcomapp/Models/ap_model.dart';
 import 'package:budcomapp/Models/driver_model.dart';
 import 'package:budcomapp/Providers/accesspoint_provider.dart';
+import 'package:budcomapp/Providers/assignment_provider.dart';
+import 'package:budcomapp/Providers/route_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -10,8 +13,8 @@ import 'Models/route_model.dart';
 import 'Providers/driver_provider.dart';
 
 class GetJobList extends StatefulWidget {
-  String? driverEmail;
-  GetJobList({Key? key, required this.driverEmail}) : super(key: key);
+  Driver_Model? driverModel;
+  GetJobList({Key? key, required this.driverModel}) : super(key: key);
 
   @override
   _GetJobListState createState() => _GetJobListState();
@@ -20,42 +23,40 @@ class GetJobList extends StatefulWidget {
 DocumentReference? routeDoc;
 
 class _GetJobListState extends State<GetJobList> {
-  late AccessPointProvider entryProvider;
+  late AccessPointProvider accessPointProvider;
+  late DriverProvider driverProvider;
+  late RouteProvider routeProvider;
+  late AssignmentProvider assignmentProvider;
+  late DocumentReference ref;
   void initState() {
     super.initState();
   }
 
   @override
   void didChangeDependencies() {
+    accessPointProvider = Provider.of<AccessPointProvider>(context);
+    driverProvider = Provider.of<DriverProvider>(context);
+    routeProvider = Provider.of<RouteProvider>(context);
+    assignmentProvider = Provider.of<AssignmentProvider>(context);
+
     super.didChangeDependencies();
-    entryProvider = Provider.of<AccessPointProvider>(context);
   }
 
-// !! Get Current User + Route
-  final driversRef = FirebaseFirestore.instance
-      .collection('drivers')
-      .withConverter<Driver_Model>(
-          fromFirestore: (snapshot, _) =>
-              Driver_Model.fromMap(snapshot.data()!),
-          toFirestore: (driver, _) => driver.toMap());
-  final routesRef = FirebaseFirestore.instance
-      .collection('Routes')
-      .withConverter<Route_Model>(
-        fromFirestore: (snapshot, _) => Route_Model.fromJson(snapshot.data()!),
-        toFirestore: (newDriver, _) => newDriver.toJson(),
-      );
+  Widget _loadSomedata() {
+    try {
+      routeProvider.setId = widget.driverModel!.routeId;
+      var routeEntry = routeProvider.entrie;
+      Future.delayed(Duration.zero, () async {
+        routeProvider.loadAll(await routeEntry);
+        for (var item in routeProvider.list_of_aps as List<ApModelMini>) {}
+      });
+    } catch (e) {}
+    throw () {};
+  }
 
-  final apRef = FirebaseFirestore.instance
-      .collection('AccessPoint')
-      .withConverter<ApModel>(
-        fromFirestore: (snapshot, _) =>
-            ApModel.fromJson(snapshot.data().toString()),
-        toFirestore: (newDriver, _) => newDriver.toMap(),
-      );
-
-  Widget _build(BuildContext context, Stream<QuerySnapshot> teststream) {
-    return StreamBuilder<List<ApModel>>(
-      stream: entryProvider.entries,
+  Widget _build(BuildContext context, Stream<dynamic> teststream) {
+    return StreamBuilder<dynamic>(
+      stream: teststream,
       builder: (context, snapshot) {
         return ListView.builder(
             itemCount: snapshot.data!.length,
