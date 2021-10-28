@@ -1,61 +1,217 @@
+// ignore_for_file: import_of_legacy_library_into_null_safe
+
 import 'dart:async';
-import 'package:budcomapp/Models/ap_job_model.dart';
+import 'dart:developer';
+import 'package:budcomapp/Models/ap_assignment_model.dart';
+import 'package:budcomapp/Models/ap_model.dart';
+import 'package:budcomapp/Providers/accesspoint_provider.dart';
+import 'package:budcomapp/Providers/assignment_provider.dart';
+import 'package:budcomapp/Providers/driver_provider.dart';
+import 'package:budcomapp/Providers/route_provider.dart';
 import 'package:budcomapp/Views/admin_panel.dart';
-import 'package:budcomapp/get_job_list.dart';
-import 'package:budcomapp/Views/signin_page.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:budcomapp/Views/login_view.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter/material.dart';
-
+import 'package:provider/provider.dart';
 import '../main.dart';
-import 'register_page.dart';
+
+late AccessPointProvider accessPointProvider;
+late RouteProvider routeProvider;
+late AssignmentProvider assignmentProvider;
 
 class UserInformation extends StatefulWidget {
-  const UserInformation({Key? key}) : super(key: key);
-
+  const UserInformation({Key? key, required this.user}) : super(key: key);
+  final User user;
   @override
   _UserInformationState createState() => _UserInformationState();
 }
 
-User? _user = auth.currentUser;
-
 class _UserInformationState extends State<UserInformation> {
-  final moviesRef =
-      FirebaseFirestore.instance.collection('Jobs').withConverter<ApJob>(
-            fromFirestore: (snapshot, _) => ApJob.fromJson(snapshot.data()!),
-            toFirestore: (apjob, _) => apjob.toJson(),
-          );
+  late AccessPointProvider accessPointProvider;
+  late List<ApModel> apNames = [];
+  late AssignmentProvider assignmentProvider;
+  late DriverProvider driverProvider;
+  late RouteProvider routeProvider;
+  late List<Stream<List<ApAssignment>>> streams = [];
+  late User _currentUser;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+  }
 
   @override
   void initState() {
+    _currentUser = widget.user;
+    final driverProvider = Provider.of<DriverProvider>(context, listen: false);
+    final accessPointProvider =
+        Provider.of<AccessPointProvider>(context, listen: false);
+    final routeProvider = Provider.of<RouteProvider>(context, listen: false);
+    final assignmentProvider =
+        Provider.of<AssignmentProvider>(context, listen: false);
+
+    driverProvider.changeEmail = _currentUser.email;
+    driverProvider.entrie.then((value) {
+      routeProvider.setId = value.routeId;
+      routeProvider.entrie.then((value) {
+        for (var item in List<ApModelMini>.from(
+            value.list_of_aps.map((e) => ApModelMini.fromMap(e)))) {
+          log(item.id);
+          accessPointProvider.setId = item.id;
+
+          accessPointProvider.entrie.then((value) {
+            streams.add(assignmentProvider.entries(value));
+            apNames.add(value);
+            setState(() {});
+            log(streams.toString());
+          });
+        }
+      });
+    });
     auth.userChanges().listen(
-          (event) => setState(() => _user = event),
+          (event) => setState(() => _currentUser = event!),
         );
+
+    log('message');
     super.initState();
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  Widget res(BuildContext context) {
+    assignmentProvider = Provider.of<AssignmentProvider>(context);
+    routeProvider = Provider.of<RouteProvider>(context);
+    return ListView.builder(
+        shrinkWrap: false,
+        itemCount: streams.length,
+        itemBuilder: (BuildContext context, int index) {
+          return Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: StreamBuilder<List<ApAssignment>>(
+              stream: streams[index],
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return const Text('Something went wrong');
+                }
+
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const CircularProgressIndicator();
+                }
+                log(snapshot.data!.map.toString());
+                return Column(
+                  children: [
+                    Text(
+                      apNames[index].name,
+                      style: const TextStyle(
+                          color: Colors.redAccent,
+                          fontSize: 30.0,
+                          fontWeight: FontWeight.bold),
+                    ),
+                    Column(
+                        children: snapshot.data!.map((accessPoint) {
+                      return Slidable(
+                        dismissal: SlidableDismissal(
+                          onDismissed: (actionType) {
+                            _showSnackBar(actionType == SlideActionType.primary
+                                ? 'Dismiss Archive'
+                                : 'Dimiss Delete');
+                            setState(() => assignmentProvider.removeEntry(
+                                accessPoint.id, apNames[index]));
+                          },
+                          // Confirm on dismissal:
+                          onWillDismiss: (actionType) {
+                            return showDialog<bool>(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: Text(
+                                      actionType == SlideActionType.primary
+                                          ? 'Archive'
+                                          : 'Delete'),
+                                  content: const Text('Confirm action?'),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(false),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(true),
+                                      child: const Text('Ok'),
+                                    ),
+                                  ],
+                                );
+                              },
+                            ) as FutureOr<bool>;
+                          },
+                          child: const SlidableDrawerDismissal(),
+                        ),
+                        key: Key(accessPoint.id),
+                        actionPane: const SlidableDrawerActionPane(),
+                        actions: [
+                          IconSlideAction(
+                            caption: 'Archive',
+                            color: Colors.blue,
+                            icon: Icons.archive,
+                            onTap: () => _showSnackBar('Archive'),
+                          ),
+                        ], // 'Archive' action
+                        secondaryActions: [
+                          IconSlideAction(
+                            caption: 'Delete',
+                            color: Colors.red,
+                            icon: Icons.delete,
+                            onTap: () => _showSnackBar('Delete'),
+                          ),
+                        ], // 'Delete' action
+                        child: Card(
+                            child: ListTile(
+                          isThreeLine: true,
+                          leading: const Icon(Icons.account_box),
+                          title: Text(accessPoint.name),
+                          subtitle: Text(
+                              accessPoint.address + '\n' + accessPoint.awb),
+                          onTap: () {},
+                        )),
+                      );
+                    }).toList()),
+                  ],
+                );
+              },
+            ),
+          );
+        });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Center(child: GetJobList(driverEmail: _user!.email));
+    return res(context);
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
+class ProfilePage extends StatefulWidget {
+  const ProfilePage({Key? key, required this.title, required this.user})
+      : super(key: key);
 
   final String title;
+  final User user;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  User? user = auth.currentUser;
+late User _currentUser;
 
+class _ProfilePageState extends State<ProfilePage> {
+  bool _isSigningOut = false;
   static final List<Widget> _pages = <Widget>[
-    const Center(
-      child: UserInformation(),
+    Center(
+      child: UserInformation(user: _currentUser),
     ),
     const Center(
       child: Icon(
@@ -75,8 +231,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void initState() {
+    _currentUser = widget.user;
     auth.userChanges().listen(
-          (event) => setState(() => user = event),
+          (event) => setState(() => _currentUser = event!),
         );
     super.initState();
   }
@@ -101,10 +258,39 @@ class _MyHomePageState extends State<MyHomePage> {
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
-    final User? user = auth.currentUser;
+
     var drawerHeader = UserAccountsDrawerHeader(
-      accountName: Text(user == null ? 'Not signed in' : '${user.displayName}'),
-      accountEmail: Text(user == null ? '' : '${user.email}'),
+      otherAccountsPicturesSize: const Size(85, 35),
+      otherAccountsPictures: [
+        SizedBox(height: 1.0),
+        _isSigningOut
+            ? CircularProgressIndicator()
+            : ElevatedButton(
+                onPressed: () async {
+                  setState(() {
+                    _isSigningOut = true;
+                  });
+                  await FirebaseAuth.instance.signOut();
+                  setState(() {
+                    _isSigningOut = false;
+                  });
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                      builder: (context) => LoginPage(),
+                    ),
+                  );
+                },
+                child: Text('Sign out'),
+                style: ElevatedButton.styleFrom(
+                  primary: Colors.red,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                ),
+              ),
+      ],
+      accountName: Text('${_currentUser.displayName}'),
+      accountEmail: Text('${_currentUser.email}'),
       currentAccountPicture: const CircleAvatar(
         child: FlutterLogo(size: 42.0),
       ),
@@ -112,24 +298,6 @@ class _MyHomePageState extends State<MyHomePage> {
     final drawerItems = ListView(
       children: <Widget>[
         drawerHeader,
-        ListTile(
-          title: const Text(
-            'Sign in',
-          ),
-          leading: const Icon(Icons.favorite),
-          onTap: () {
-            _pushPage(context, SignInPage());
-          },
-        ),
-        ListTile(
-          title: const Text(
-            'Registrer',
-          ),
-          leading: const Icon(Icons.comment),
-          onTap: () async {
-            await _pushPage(context, RegisterPage());
-          },
-        ),
         ListTile(
           title: const Text(
             'Admin Panel',
