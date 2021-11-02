@@ -106,8 +106,8 @@ class _UserInformationState extends State<UserInformation> {
                   children: [
                     Text(
                       apNames[index].name,
-                      style: const TextStyle(
-                          color: Colors.redAccent,
+                      style: TextStyle(
+                          color: Colors.red.shade800,
                           fontSize: 30.0,
                           fontWeight: FontWeight.bold),
                     ),
@@ -172,10 +172,29 @@ class _UserInformationState extends State<UserInformation> {
                         child: Card(
                             child: ListTile(
                           isThreeLine: true,
-                          leading: const Icon(Icons.account_box),
-                          title: Text(accessPoint.name),
-                          subtitle: Text(
-                              accessPoint.address + '\n' + accessPoint.awb),
+                          title: Text(
+                            accessPoint.name,
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white),
+                          ),
+                          subtitle: RichText(
+                            text: TextSpan(
+                              children: <TextSpan>[
+                                const TextSpan(text: ' \n'),
+                                TextSpan(
+                                    text: accessPoint.address,
+                                    style: const TextStyle(
+                                        color: Colors.redAccent)),
+                                const TextSpan(text: ' \n\n'),
+                                TextSpan(
+                                    text: accessPoint.awb,
+                                    style: const TextStyle(
+                                        color: Colors.deepOrangeAccent,
+                                        decoration: TextDecoration.underline))
+                              ],
+                            ),
+                          ),
                           onTap: () {},
                         )),
                       );

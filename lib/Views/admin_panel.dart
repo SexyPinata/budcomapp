@@ -6,12 +6,15 @@ import 'package:budcomapp/Models/ap_data_raw_model.dart';
 import 'package:budcomapp/Models/ap_model.dart';
 import 'package:budcomapp/Providers/accesspoint_provider.dart';
 import 'package:budcomapp/Providers/assignment_provider.dart';
+import 'package:budcomapp/Services/custom_excel_to_json.dart';
+import 'package:budcomapp/Services/raw_accesspoint_data_processor.dart';
 import 'package:excel_to_json/excel_to_json.dart';
 import 'package:budcomapp/Models/driver_model.dart';
 import 'package:budcomapp/Models/route_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
 
 import '../Providers/driver_provider.dart';
 import 'driver_entry.dart';
@@ -284,7 +287,7 @@ class _RawAccessPointDataProcessorState
 
     final assignmentProvider =
         Provider.of<AssignmentProvider>(context, listen: false);
-    List<ApModel> memoryList;
+    List<ApModel> _memoryList;
     var _stream = accessPointProvider.entries;
     return Container(
       child: StreamBuilder<List<ApModel>>(
@@ -294,15 +297,16 @@ class _RawAccessPointDataProcessorState
             return ElevatedButton(
               child: Text("PRESS TO UPLOAD EXCEL AND CONVERT TO JSON"),
               onPressed: () {
-                memoryList = snapshot.data!;
-                ExcelToJson().convert().then((onValue) {
+                _memoryList = snapshot.data!;
+
+                CustomExcelToJson().convert().then((onValue) {
                   Iterable li = json.decode(onValue!);
                   List<Aprawdatamodel> list = List<Aprawdatamodel>.from(
                       li.map((e) => Aprawdatamodel.fromMap(e)));
                   log(onValue.toString());
                   for (var item in list) {
                     bool isPresent = false;
-                    for (var accessPoint in memoryList) {
+                    for (var accessPoint in _memoryList) {
                       if (item.AP_Number == accessPoint.number) {
                         isPresent = true;
                         assignmentProvider.changeAddress = (item.Cnee_Address +
@@ -321,6 +325,7 @@ class _RawAccessPointDataProcessorState
                       }
                     }
                     if (!isPresent) {
+                      var uuid = const Uuid();
                       log(item.AP_Name + ' was not found, adding');
                       var model = ApModel(
                           id: '123',
@@ -329,13 +334,14 @@ class _RawAccessPointDataProcessorState
                           street: item.AP_Address,
                           zip: item.AP_PostCode,
                           number: item.AP_Number);
-                      memoryList.add(model);
+                      _memoryList.add(model);
                       accessPointProvider.changeCity = item.AP_City;
                       accessPointProvider.changeName = item.AP_Name;
                       accessPointProvider.changeNumber = item.AP_Number;
                       accessPointProvider.changeStreet = item.AP_Address;
                       accessPointProvider.changeZip = item.AP_PostCode;
                       accessPointProvider.saveEntry();
+                      accessPointProvider.loadAll(null);
                     }
                     if (isPresent) {}
                   }

@@ -121,7 +121,7 @@ packages:
     source: hosted
     version: "2.0.3"
   excel:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: excel
       url: "https://pub.dartlang.org"
