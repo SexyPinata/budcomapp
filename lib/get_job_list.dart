@@ -1,5 +1,6 @@
 // ignore: file_names
-import 'package:budcomapp/Models/ap_assignment_model.dart';
+// ignore_for_file: import_of_legacy_library_into_null_safe
+
 import 'package:budcomapp/Models/ap_model.dart';
 import 'package:budcomapp/Models/driver_model.dart';
 import 'package:budcomapp/Providers/accesspoint_provider.dart';
@@ -9,7 +10,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'Models/route_model.dart';
 import 'Providers/driver_provider.dart';
 
 class GetJobList extends StatefulWidget {

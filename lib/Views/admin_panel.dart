@@ -335,6 +335,7 @@ class _RawAccessPointDataProcessorState
                           zip: item.AP_PostCode,
                           number: item.AP_Number);
                       _memoryList.add(model);
+                      accessPointProvider.loadAll(null);
                       accessPointProvider.changeCity = item.AP_City;
                       accessPointProvider.changeName = item.AP_Name;
                       accessPointProvider.changeNumber = item.AP_Number;

@@ -174,7 +174,7 @@ class _UserInformationState extends State<UserInformation> {
                           isThreeLine: true,
                           title: Text(
                             accessPoint.name,
-                            style: TextStyle(
+                            style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white),
                           ),
@@ -184,8 +184,8 @@ class _UserInformationState extends State<UserInformation> {
                                 const TextSpan(text: ' \n'),
                                 TextSpan(
                                     text: accessPoint.address,
-                                    style: const TextStyle(
-                                        color: Colors.redAccent)),
+                                    style: TextStyle(
+                                        color: Colors.cyanAccent.shade700)),
                                 const TextSpan(text: ' \n\n'),
                                 TextSpan(
                                     text: accessPoint.awb,
@@ -344,6 +344,7 @@ class _ProfilePageState extends State<ProfilePage> {
           onPressed: () async {}),
       bottomNavigationBar: BottomNavigationBar(
         selectedFontSize: 20,
+        backgroundColor: Colors.black26,
         selectedIconTheme: IconThemeData(color: Colors.red[800], size: 40),
         selectedItemColor: Colors.red[800],
         selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
