@@ -9,6 +9,7 @@ import 'package:budcomapp/Providers/assignment_provider.dart';
 import 'package:budcomapp/Providers/driver_provider.dart';
 import 'package:budcomapp/Providers/route_provider.dart';
 import 'package:budcomapp/Views/admin_panel.dart';
+import 'package:budcomapp/Views/infonotice_view.dart';
 import 'package:budcomapp/Views/login_view.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -158,7 +159,8 @@ class _UserInformationState extends State<UserInformation> {
                             caption: 'Archive',
                             color: Colors.blue,
                             icon: Icons.archive,
-                            onTap: () => _showSnackBar('Archive'),
+                            onTap: () => setState(() => assignmentProvider
+                                .removeEntry(accessPoint.id, apNames[index])),
                           ),
                         ], // 'Archive' action
                         secondaryActions: [
@@ -166,7 +168,8 @@ class _UserInformationState extends State<UserInformation> {
                             caption: 'Delete',
                             color: Colors.red,
                             icon: Icons.delete,
-                            onTap: () => _showSnackBar('Delete'),
+                            onTap: () => setState(() => assignmentProvider
+                                .removeEntry(accessPoint.id, apNames[index])),
                           ),
                         ], // 'Delete' action
                         child: Card(
@@ -326,6 +329,15 @@ class _ProfilePageState extends State<ProfilePage> {
             await _pushPage(context, AdminPanel());
           },
         ),
+        ListTile(
+          title: const Text(
+            'Info Notice',
+          ),
+          leading: const Icon(Icons.comment),
+          onTap: () async {
+            await _pushPage(context, infoNotice());
+          },
+        ),
       ],
     );
 
@@ -338,10 +350,6 @@ class _ProfilePageState extends State<ProfilePage> {
         index: _selectedIndex,
         children: _pages,
       ),
-      floatingActionButton: FloatingActionButton(
-          backgroundColor: Colors.green,
-          child: const Icon(Icons.add),
-          onPressed: () async {}),
       bottomNavigationBar: BottomNavigationBar(
         selectedFontSize: 20,
         backgroundColor: Colors.black26,
